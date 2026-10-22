@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-labelledby="title desc">
+  <title id="title">Minh họa điện thoại công nghệ</title>
+  <desc id="desc">Minh họa vector nguyên bản về điện thoại thông minh với hiệu ứng ánh sáng xanh.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#dbeafe"/>
+      <stop offset="1" stop-color="#bae6fd"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="1" x2="1" y2="0">
+      <stop stop-color="#0f172a"/>
+      <stop offset=".48" stop-color="#0369a1"/>
+      <stop offset="1" stop-color="#67e8f9"/>
+    </linearGradient>
+    <linearGradient id="back" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#e2e8f0"/>
+      <stop offset="1" stop-color="#64748b"/>
+    </linearGradient>
+    <filter id="shadow" x="-.4" y="-.3" width="1.8" height="1.8">
+      <feDropShadow dx="0" dy="16" stdDeviation="15" flood-color="#0c4a6e" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect width="480" height="480" rx="36" fill="url(#bg)"/>
+  <circle cx="240" cy="238" r="168" fill="#fff" opacity=".28"/>
+  <path d="M34 330c90-55 152-56 227-2s123 53 185 7v145H34z" fill="#7dd3fc" opacity=".28"/>
+  <g filter="url(#shadow)" transform="rotate(-13 184 242)">
+    <rect x="92" y="91" width="171" height="302" rx="33" fill="url(#back)" stroke="#fff" stroke-width="3"/>
+    <rect x="102" y="101" width="151" height="282" rx="26" fill="#334155"/>
+    <rect x="112" y="112" width="60" height="82" rx="18" fill="#475569"/>
+    <circle cx="132" cy="134" r="11" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>
+    <circle cx="153" cy="162" r="11" fill="#0f172a" stroke="#cbd5e1" stroke-width="3"/>
+    <circle cx="132" cy="179" r="5" fill="#fef3c7"/>
+    <path d="M113 232c35-45 89-35 140 8v128H113z" fill="url(#screen)" opacity=".78"/>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(11 317 241)">
+    <rect x="236" y="83" width="157" height="310" rx="34" fill="#0f172a"/>
+    <rect x="244" y="91" width="141" height="294" rx="28" fill="url(#screen)"/>
+    <path d="M247 302c44-74 89-45 138-128v205H247z" fill="#38bdf8" opacity=".5"/>
+    <path d="M247 335c42-53 91-42 138-97v147H247z" fill="#a5f3fc" opacity=".48"/>
+    <rect x="286" y="101" width="57" height="6" rx="3" fill="#0f172a"/>
+  </g>
+  <circle cx="386" cy="101" r="8" fill="#fff" opacity=".8"/>
+  <circle cx="73" cy="355" r="6" fill="#fff" opacity=".8"/>
+</svg>

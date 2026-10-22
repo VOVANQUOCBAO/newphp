@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-labelledby="title desc">
+  <title id="title">Minh họa điện thoại chụp ảnh</title>
+  <desc id="desc">Minh họa vector nguyên bản về điện thoại thông minh và camera đa ống kính.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#dcfce7"/>
+      <stop offset="1" stop-color="#bbf7d0"/>
+    </linearGradient>
+    <linearGradient id="screen" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fbbf24"/>
+      <stop offset=".48" stop-color="#fb7185"/>
+      <stop offset="1" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#f8fafc"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+    <filter id="shadow" x="-.4" y="-.3" width="1.8" height="1.8">
+      <feDropShadow dx="0" dy="15" stdDeviation="14" flood-color="#14532d" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect width="480" height="480" rx="36" fill="url(#bg)"/>
+  <circle cx="240" cy="240" r="155" fill="#fff" opacity=".3"/>
+  <path d="M45 388c72-59 125-45 186-4s129 53 203-10v106H45z" fill="#86efac" opacity=".38"/>
+  <g filter="url(#shadow)" transform="rotate(-11 180 239)">
+    <rect x="85" y="88" width="173" height="304" rx="34" fill="#1e293b"/>
+    <rect x="93" y="96" width="157" height="288" rx="27" fill="url(#screen)"/>
+    <circle cx="172" cy="111" r="5" fill="#1e293b"/>
+    <path d="M98 272c25-33 44-20 68-62 23-39 40-36 81-69v237H98z" fill="#fef3c7" opacity=".46"/>
+    <path d="M98 302c40-29 66-10 97-37 19-17 34-22 52-26v145H98z" fill="#34d399" opacity=".48"/>
+    <circle cx="207" cy="159" r="43" fill="#fde68a" opacity=".6"/>
+    <rect x="143" y="107" width="55" height="6" rx="3" fill="#0f172a"/>
+  </g>
+  <g filter="url(#shadow)" transform="rotate(10 315 237)">
+    <rect x="255" y="102" width="132" height="250" rx="28" fill="url(#body)"/>
+    <rect x="263" y="110" width="116" height="234" rx="22" fill="#64748b"/>
+    <rect x="273" y="120" width="76" height="106" rx="23" fill="#475569"/>
+    <circle cx="295" cy="144" r="16" fill="#0f172a" stroke="#cbd5e1" stroke-width="4"/>
+    <circle cx="328" cy="144" r="16" fill="#0f172a" stroke="#cbd5e1" stroke-width="4"/>
+    <circle cx="295" cy="187" r="16" fill="#0f172a" stroke="#cbd5e1" stroke-width="4"/>
+    <circle cx="329" cy="187" r="7" fill="#fde68a"/>
+    <path d="M278 254c26-20 68-20 99 8v72h-99z" fill="url(#screen)" opacity=".82"/>
+  </g>
+  <path d="M67 83l9 18 20 3-15 14 4 20-18-10-18 10 4-20-15-14 20-3z" fill="#fff" opacity=".72"/>
+</svg>

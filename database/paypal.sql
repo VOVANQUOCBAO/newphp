@@ -1,0 +1,25 @@
+-- Chon dung CSDL truoc khi import. Chi them bang moi; khong thay doi/xoa don hang cu.
+CREATE TABLE IF NOT EXISTS thanhtoan_paypal (
+  id_donhang INT PRIMARY KEY,
+  checkout_key CHAR(64) NOT NULL UNIQUE,
+  mode VARCHAR(10) NOT NULL,
+  merchant_id VARCHAR(32) NOT NULL,
+  client_id VARCHAR(255) NOT NULL,
+  amount_vnd DECIMAL(12,2) NOT NULL,
+  amount_usd DECIMAL(12,2) NOT NULL,
+  vnd_per_usd DECIMAL(16,6) NOT NULL,
+  rate_source VARCHAR(30) NOT NULL,
+  rate_at DATETIME NOT NULL,
+  provider_order_id VARCHAR(32) NULL UNIQUE,
+  capture_id VARCHAR(32) NULL UNIQUE,
+  create_request_id CHAR(32) NOT NULL UNIQUE,
+  capture_request_id CHAR(32) NOT NULL UNIQUE,
+  status VARCHAR(24) NOT NULL DEFAULT 'created',
+  lease_until DATETIME NULL,
+  expires_at DATETIME NOT NULL,
+  paid_at DATETIME NULL,
+  error_code VARCHAR(50) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_paypal_don FOREIGN KEY (id_donhang) REFERENCES donhang(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

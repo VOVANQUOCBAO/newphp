@@ -1,0 +1,754 @@
+/* ==========================================================================
+   HIỆU ỨNG GIAO DIỆN THEO 4 MÙA (XUÂN - HẠ - THU - ĐÔNG)
+   - Mùa Xuân: Cánh hoa đào rơi bay bay, nhành hoa đào khoe sắc
+   - Mùa Hạ: Bãi biển, sóng biển, cây dừa nhiệt đới đung đưa, mặt trời rực rỡ
+   - Mùa Thu: Lá phong rơi bay bay với màu sắc chuyển động ấm áp
+   - Mùa Đông: Tuyết rơi lấp lánh, Ông già Noel & Cỗ xe tuần lộc bay qua bầu trời
+   Thiết kế chuẩn GPU Hardware Acceleration (60FPS), pointer-events: none không cản trở click.
+   ========================================================================== */
+
+/* Container bao quát hiệu ứng mùa */
+.season-effects-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1050;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   1. MÙA XUÂN (THEME-SPRING): HOA ĐÀO RƠI BAY BAY
+   ========================================================================== */
+.spring-branch-left {
+    position: fixed;
+    top: -10px;
+    left: -15px;
+    width: 240px;
+    height: 190px;
+    pointer-events: none;
+    z-index: 1051;
+    transform-origin: top left;
+    animation: springBranchSway 5s ease-in-out infinite alternate;
+}
+
+.spring-branch-right {
+    position: fixed;
+    top: -10px;
+    right: -15px;
+    width: 220px;
+    height: 180px;
+    pointer-events: none;
+    z-index: 1051;
+    transform-origin: top right;
+    animation: springBranchSwayRight 6s ease-in-out infinite alternate;
+}
+
+@keyframes springBranchSway {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(3deg) scale(1.02); }
+}
+
+@keyframes springBranchSwayRight {
+    0% { transform: rotate(0deg) scale(1); }
+    100% { transform: rotate(-3deg) scale(1.02); }
+}
+
+/* Cánh hoa đào rơi */
+.spring-petal {
+    position: absolute;
+    top: -40px;
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation-name: springPetalFall, springPetalSway;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+}
+
+@keyframes springPetalFall {
+    0% {
+        top: -40px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.95;
+    }
+    90% {
+        opacity: 0.9;
+    }
+    100% {
+        top: 105vh;
+        opacity: 0;
+    }
+}
+
+@keyframes springPetalSway {
+    0% {
+        transform: translateX(0) rotateZ(0deg) rotateY(0deg);
+    }
+    25% {
+        transform: translateX(45px) rotateZ(70deg) rotateY(180deg);
+    }
+    50% {
+        transform: translateX(-35px) rotateZ(160deg) rotateY(360deg);
+    }
+    75% {
+        transform: translateX(50px) rotateZ(240deg) rotateY(540deg);
+    }
+    100% {
+        transform: translateX(-20px) rotateZ(360deg) rotateY(720deg);
+    }
+}
+
+/* ==========================================================================
+   2. MÙA HẠ (THEME-SUMMER): BÃI BIỂN, CÂY DỪA, SÓNG BIỂN, MẶT TRỜI
+   ========================================================================== */
+/* Cây dừa góc phải */
+.summer-palm-tree {
+    position: fixed;
+    bottom: -15px;
+    right: -10px;
+    width: 250px;
+    height: 320px;
+    pointer-events: none;
+    z-index: 1052;
+    transform-origin: bottom right;
+    animation: palmTreeBreeze 6s ease-in-out infinite alternate;
+}
+
+@keyframes palmTreeBreeze {
+    0% { transform: rotate(0deg) skewX(0deg); }
+    50% { transform: rotate(-2.5deg) skewX(-1.5deg); }
+    100% { transform: rotate(1deg) skewX(0.5deg); }
+}
+
+/* Bãi cát và sóng biển dưới chân trang */
+.summer-beach-floor {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 60px;
+    pointer-events: none;
+    z-index: 1049;
+    overflow: hidden;
+}
+
+.summer-sand-strip {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(180deg, #fceabb 0%, #f8b500 100%);
+    border-top: 2px solid #e1a100;
+    box-shadow: 0 -4px 12px rgba(248, 181, 0, 0.25);
+}
+
+.summer-wave-layer {
+    position: absolute;
+    bottom: 16px;
+    left: 0;
+    width: 200%;
+    height: 40px;
+    fill: rgba(0, 198, 255, 0.35);
+    animation: summerWaveFlow 10s cubic-bezier(0.36, 0.45, 0.63, 0.53) infinite;
+}
+
+.summer-wave-layer.wave-front {
+    bottom: 12px;
+    fill: rgba(0, 114, 255, 0.25);
+    animation: summerWaveFlow 7s cubic-bezier(0.36, 0.45, 0.63, 0.53) -2s infinite;
+}
+
+@keyframes summerWaveFlow {
+    0% { transform: translateX(0); }
+    50% { transform: translateX(-25%); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Phụ kiện bãi biển trên bờ cát */
+.summer-umbrella {
+    position: absolute;
+    bottom: 14px;
+    left: 60px;
+    width: 48px;
+    height: 48px;
+}
+
+.summer-starfish {
+    position: absolute;
+    bottom: 4px;
+    left: 140px;
+    width: 18px;
+    height: 18px;
+    animation: starfishGlow 3s ease-in-out infinite alternate;
+}
+
+.summer-surfboard {
+    position: absolute;
+    bottom: 8px;
+    right: 230px;
+    width: 22px;
+    height: 60px;
+    transform: rotate(20deg);
+}
+
+@keyframes starfishGlow {
+    0% { filter: drop-shadow(0 0 1px #ff7675); }
+    100% { filter: drop-shadow(0 0 5px #fab1a0); }
+}
+
+/* Mặt trời rực rỡ góc trên */
+.summer-sun {
+    position: fixed;
+    top: 20px;
+    right: 40px;
+    width: 90px;
+    height: 90px;
+    pointer-events: none;
+    z-index: 1048;
+}
+
+.summer-sun-glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255, 230, 0, 0.7) 0%, rgba(255, 154, 0, 0.4) 50%, rgba(255, 200, 0, 0) 75%);
+    animation: sunPulse 3s ease-in-out infinite alternate;
+}
+
+.summer-sun-rays {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    animation: sunSpin 25s linear infinite;
+}
+
+@keyframes sunPulse {
+    0% { transform: scale(0.92); opacity: 0.8; }
+    100% { transform: scale(1.15); opacity: 1; }
+}
+
+@keyframes sunSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Chim hải âu bay lượn */
+.summer-seagull {
+    position: fixed;
+    top: 60px;
+    left: -80px;
+    width: 42px;
+    height: 22px;
+    pointer-events: none;
+    z-index: 1049;
+    animation: seagullFly 22s linear infinite;
+}
+
+.summer-seagull:nth-child(2) {
+    top: 95px;
+    animation-delay: -11s;
+    animation-duration: 26s;
+    transform: scale(0.75);
+}
+
+@keyframes seagullFly {
+    0% {
+        left: -80px;
+        transform: translateY(0) scaleX(1);
+    }
+    40% {
+        transform: translateY(25px) scaleX(1);
+    }
+    80% {
+        transform: translateY(-15px) scaleX(1);
+    }
+    100% {
+        left: 105vw;
+        transform: translateY(10px) scaleX(1);
+    }
+}
+
+/* ==========================================================================
+   3. MÙA THU (THEME-AUTUMN): LÁ PHONG RƠI BAY BAY
+   ========================================================================== */
+.autumn-branch-left {
+    position: fixed;
+    top: -10px;
+    left: -10px;
+    width: 250px;
+    height: 200px;
+    pointer-events: none;
+    z-index: 1051;
+    transform-origin: top left;
+    animation: autumnBranchSway 7s ease-in-out infinite alternate;
+}
+
+@keyframes autumnBranchSway {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(3.5deg); }
+}
+
+/* Chiếc lá phong rơi */
+.autumn-maple-leaf {
+    position: absolute;
+    top: -45px;
+    pointer-events: none;
+    will-change: transform, opacity;
+    animation-name: autumnLeafFall, autumnLeafTumble;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+}
+
+@keyframes autumnLeafFall {
+    0% {
+        top: -45px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.95;
+    }
+    90% {
+        opacity: 0.9;
+    }
+    100% {
+        top: 105vh;
+        opacity: 0;
+    }
+}
+
+@keyframes autumnLeafTumble {
+    0% {
+        transform: translateX(0) rotate3d(1, 1, 0, 0deg) rotateZ(0deg);
+    }
+    25% {
+        transform: translateX(60px) rotate3d(1, 1, 0.5, 90deg) rotateZ(45deg);
+    }
+    50% {
+        transform: translateX(-40px) rotate3d(0.5, 1, 0, 180deg) rotateZ(120deg);
+    }
+    75% {
+        transform: translateX(55px) rotate3d(1, 0.5, 0.5, 270deg) rotateZ(210deg);
+    }
+    100% {
+        transform: translateX(-15px) rotate3d(1, 1, 0, 360deg) rotateZ(360deg);
+    }
+}
+
+/* ==========================================================================
+   4. MÙA ĐÔNG (THEME-WINTER): TUYẾT RƠI & ÔNG GIÀ NOEL CƯỠI TUẦN LỘC
+   ========================================================================== */
+/* Bông tuyết rơi */
+.winter-snowflake {
+    position: absolute;
+    top: -30px;
+    pointer-events: none;
+    will-change: transform, opacity;
+    color: #ffffff;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.9), 0 0 10px rgba(116, 185, 255, 0.7);
+    animation-name: winterSnowFall, winterSnowDrift;
+    animation-timing-function: linear, ease-in-out;
+    animation-iteration-count: infinite, infinite;
+}
+
+@keyframes winterSnowFall {
+    0% {
+        top: -30px;
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.95;
+    }
+    90% {
+        opacity: 0.85;
+    }
+    100% {
+        top: 105vh;
+        opacity: 0;
+    }
+}
+
+@keyframes winterSnowDrift {
+    0% {
+        transform: translateX(0) rotate(0deg);
+    }
+    50% {
+        transform: translateX(35px) rotate(180deg);
+    }
+    100% {
+        transform: translateX(-20px) rotate(360deg);
+    }
+}
+
+/* Ông già Noel và cỗ xe tuần lộc bay qua bầu trời */
+.winter-santa-sleigh {
+    position: fixed;
+    top: 55px;
+    right: -320px;
+    width: 270px;
+    height: 95px;
+    pointer-events: none;
+    z-index: 1053;
+    animation: santaFlight 22s cubic-bezier(0.42, 0, 0.58, 1) infinite;
+}
+
+@keyframes santaFlight {
+    0% {
+        right: -320px;
+        top: 45px;
+        transform: scale(0.9) rotate(-3deg);
+        opacity: 0;
+    }
+    5% {
+        opacity: 1;
+    }
+    25% {
+        top: 85px;
+        transform: scale(1.02) rotate(2deg);
+    }
+    50% {
+        top: 40px;
+        transform: scale(0.95) rotate(-2deg);
+    }
+    75% {
+        top: 75px;
+        transform: scale(1.05) rotate(3deg);
+    }
+    95% {
+        opacity: 1;
+    }
+    100% {
+        right: 105vw;
+        top: 35px;
+        transform: scale(0.9) rotate(-2deg);
+        opacity: 0;
+    }
+}
+
+/* Vệt bụi sao ma thuật phía sau cỗ xe tuần lộc */
+.winter-magic-trail {
+    position: absolute;
+    right: 0;
+    top: 35px;
+    width: 140px;
+    height: 30px;
+    pointer-events: none;
+}
+
+.winter-magic-star {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #ffd700;
+    box-shadow: 0 0 8px #fff, 0 0 14px #ffd700;
+    animation: magicStarTwinkle 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes magicStarTwinkle {
+    0% { transform: scale(0.5); opacity: 0.3; }
+    100% { transform: scale(1.4); opacity: 1; }
+}
+
+/* Băng tuyết đóng mép trên màn hình */
+.winter-icicles-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 18px;
+    pointer-events: none;
+    z-index: 1052;
+    background-repeat: repeat-x;
+    background-size: 80px 18px;
+    opacity: 0.85;
+}
+
+/* Chú Lân và Ông Địa ngày Tết mùa xuân */
+.spring-lan-ongdia {
+    position: fixed;
+    bottom: 5px;
+    left: 10px;
+    width: 220px;
+    height: 155px;
+    pointer-events: none;
+    z-index: 1052;
+    transform-origin: bottom left;
+}
+
+@keyframes ongDiaFan {
+    0% { transform: rotate(0deg); }
+    50% { transform: rotate(-25deg); }
+    100% { transform: rotate(10deg); }
+}
+
+@keyframes ongDiaBounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-7px); }
+}
+
+@keyframes lanHeadDance {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    25% { transform: translateY(-10px) rotate(4deg); }
+    75% { transform: translateY(-3px) rotate(-3deg); }
+}
+
+@keyframes lanBlinkEye {
+    0%, 90%, 100% { transform: scaleY(1); }
+    95% { transform: scaleY(0.15); }
+}
+
+/* ==========================================================================
+   BIẾN ĐỔI NÚT MUA HÀNG VÀ GIAO DIỆN THEO MÙA (SEASONAL UI & BUTTONS)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   MÙA ĐÔNG: NÚT ĐÓNG BĂNG (FROZEN ICE BUTTON), VIỀN BĂNG VÀ MŨ TUYẾT
+   -------------------------------------------------------------------------- */
+body.theme-winter .btn-add-cart,
+body.theme-winter .btn-primary,
+.theme-winter .btn-primary,
+.theme-winter .btn-add-cart {
+    position: relative;
+    background: linear-gradient(135deg, #1e3799 0%, #0984e3 50%, #74b9ff 100%) !important;
+    border: 1.5px solid rgba(223, 240, 255, 0.85) !important;
+    box-shadow: 0 4px 15px rgba(9, 132, 227, 0.35), inset 0 2px 4px rgba(255, 255, 255, 0.6) !important;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+}
+
+/* Lớp băng tuyết đóng mép trên của nút */
+body.theme-winter .btn-add-cart::before,
+body.theme-winter .btn-primary::before,
+.theme-winter .btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 7px;
+    background: radial-gradient(circle at 8px 0, #ffffff 4px, transparent 5px) repeat-x,
+                linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%);
+    background-size: 16px 7px, 100% 7px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0.95;
+}
+
+/* Vệt sáng băng tuyết quét qua nút */
+body.theme-winter .btn-add-cart::after,
+body.theme-winter .btn-primary::after,
+.theme-winter .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: rotate(30deg);
+    animation: iceGlint 3.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes iceGlint {
+    0%, 65% { left: -100%; }
+    100% { left: 160%; }
+}
+
+body.theme-winter .btn-add-cart:hover,
+body.theme-winter .btn-primary:hover,
+.theme-winter .btn-primary:hover {
+    background: linear-gradient(135deg, #0c2461 0%, #1e3799 50%, #00cec9 100%) !important;
+    box-shadow: 0 6px 22px rgba(0, 206, 201, 0.5), inset 0 2px 6px rgba(255, 255, 255, 0.8) !important;
+    transform: translateY(-2px);
+}
+
+body.theme-winter .product-card,
+.theme-winter .product-card {
+    border: 1px solid #d4e6f1 !important;
+    box-shadow: 0 4px 18px rgba(41, 128, 185, 0.12) !important;
+}
+
+body.theme-winter .navbar-main {
+    background: linear-gradient(135deg, #1b3a5b 0%, #2980b9 100%) !important;
+    border-bottom: 2.5px solid #74b9ff;
+    box-shadow: 0 4px 20px rgba(41, 128, 185, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   MÙA XUÂN: NÚT ĐỎ TẾT MAY MẮN & VÀNG KIM TÀI LỘC
+   -------------------------------------------------------------------------- */
+body.theme-spring .btn-add-cart,
+body.theme-spring .btn-primary,
+.theme-spring .btn-primary,
+.theme-spring .btn-add-cart {
+    position: relative;
+    background: linear-gradient(135deg, #d70018 0%, #eb2f06 50%, #ff4d4d 100%) !important;
+    border: 1.5px solid #ffd700 !important;
+    box-shadow: 0 4px 16px rgba(215, 0, 24, 0.4), inset 0 1px 3px rgba(255, 215, 0, 0.6) !important;
+    color: #ffffff !important;
+    overflow: hidden;
+}
+
+body.theme-spring .btn-add-cart::after,
+body.theme-spring .btn-primary::after,
+.theme-spring .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.7), transparent);
+    transform: rotate(30deg);
+    animation: goldGlint 3.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes goldGlint {
+    0%, 65% { left: -100%; }
+    100% { left: 160%; }
+}
+
+body.theme-spring .btn-add-cart:hover,
+body.theme-spring .btn-primary:hover,
+.theme-spring .btn-primary:hover {
+    background: linear-gradient(135deg, #b30012 0%, #d70018 50%, #ff6b6b 100%) !important;
+    box-shadow: 0 6px 24px rgba(215, 0, 24, 0.55), 0 0 10px rgba(255, 215, 0, 0.5) !important;
+    transform: translateY(-2px);
+}
+
+body.theme-spring .product-card,
+.theme-spring .product-card {
+    border: 1.5px solid #ffccd2 !important;
+    background: #ffffff;
+    box-shadow: 0 4px 18px rgba(215, 0, 24, 0.08) !important;
+}
+
+body.theme-spring .navbar-main {
+    background: linear-gradient(135deg, #990000 0%, #d70018 100%) !important;
+    border-bottom: 2.5px solid #ffd700;
+    box-shadow: 0 4px 20px rgba(215, 0, 24, 0.3) !important;
+}
+
+/* --------------------------------------------------------------------------
+   MÙA HẠ: NÚT BIỂN XANH NHIỆT ĐỚI & SÓNG NƯỚC
+   -------------------------------------------------------------------------- */
+body.theme-summer .btn-add-cart,
+body.theme-summer .btn-primary,
+.theme-summer .btn-primary,
+.theme-summer .btn-add-cart {
+    position: relative;
+    background: linear-gradient(135deg, #0984e3 0%, #00cec9 100%) !important;
+    border: 1.5px solid #81ecec !important;
+    box-shadow: 0 4px 16px rgba(9, 132, 227, 0.35), inset 0 1px 3px rgba(255, 255, 255, 0.5) !important;
+    overflow: hidden;
+}
+
+body.theme-summer .btn-add-cart::after,
+body.theme-summer .btn-primary::after,
+.theme-summer .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+    transform: rotate(30deg);
+    animation: waterGlint 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes waterGlint {
+    0%, 70% { left: -100%; }
+    100% { left: 160%; }
+}
+
+body.theme-summer .product-card,
+.theme-summer .product-card {
+    border: 1px solid #dff9fb !important;
+    box-shadow: 0 4px 18px rgba(9, 132, 227, 0.09) !important;
+}
+
+body.theme-summer .navbar-main {
+    background: linear-gradient(135deg, #0056b3 0%, #00cec9 100%) !important;
+    border-bottom: 2.5px solid #ffeaa7;
+    box-shadow: 0 4px 20px rgba(0, 150, 255, 0.25) !important;
+}
+
+/* --------------------------------------------------------------------------
+   MÙA THU: NÚT HỔ PHÁCH & MẬT ONG QUÝ PHÁI
+   -------------------------------------------------------------------------- */
+body.theme-autumn .btn-add-cart,
+body.theme-autumn .btn-primary,
+.theme-autumn .btn-primary,
+.theme-autumn .btn-add-cart {
+    position: relative;
+    background: linear-gradient(135deg, #d35400 0%, #e67e22 100%) !important;
+    border: 1.5px solid #f39c12 !important;
+    box-shadow: 0 4px 16px rgba(211, 84, 0, 0.35), inset 0 1px 3px rgba(255, 245, 200, 0.5) !important;
+    overflow: hidden;
+}
+
+body.theme-autumn .btn-add-cart::after,
+body.theme-autumn .btn-primary::after,
+.theme-autumn .btn-primary::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(90deg, transparent, rgba(255, 235, 150, 0.55), transparent);
+    transform: rotate(30deg);
+    animation: amberGlint 4s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes amberGlint {
+    0%, 70% { left: -100%; }
+    100% { left: 160%; }
+}
+
+body.theme-autumn .product-card {
+    border: 1px solid #fae5d3 !important;
+    box-shadow: 0 4px 18px rgba(211, 84, 0, 0.09) !important;
+}
+
+body.theme-autumn .navbar-main {
+    background: linear-gradient(135deg, #873600 0%, #d35400 100%) !important;
+    border-bottom: 2.5px solid #f39c12;
+    box-shadow: 0 4px 20px rgba(211, 84, 0, 0.25) !important;
+}
+
+/* Ẩn / thu nhỏ trên màn hình di động */
+@media (max-width: 576px) {
+    .spring-lan-ongdia {
+        width: 150px;
+        height: 110px;
+        bottom: 2px;
+        left: 2px;
+        transform: scale(0.85);
+    }
+    .summer-palm-tree {
+        width: 170px;
+        height: 220px;
+        bottom: -10px;
+    }
+    .summer-beach-floor {
+        height: 40px;
+    }
+    .winter-santa-sleigh {
+        width: 190px;
+        height: 65px;
+    }
+}
+
+

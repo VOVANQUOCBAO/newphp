@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" role="img" aria-labelledby="title desc">
+  <title id="title">Minh họa phụ kiện điện thoại</title>
+  <desc id="desc">Minh họa vector nguyên bản gồm bộ sạc, cáp và tai nghe không dây.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#ffedd5"/>
+      <stop offset="1" stop-color="#fed7aa"/>
+    </linearGradient>
+    <linearGradient id="charger" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#cbd5e1"/>
+    </linearGradient>
+    <linearGradient id="bud" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#94a3b8"/>
+    </linearGradient>
+    <filter id="shadow" x="-.4" y="-.3" width="1.8" height="1.8">
+      <feDropShadow dx="0" dy="14" stdDeviation="14" flood-color="#9a3412" flood-opacity=".19"/>
+    </filter>
+  </defs>
+  <rect width="480" height="480" rx="36" fill="url(#bg)"/>
+  <circle cx="240" cy="240" r="164" fill="#fff" opacity=".28"/>
+  <circle cx="90" cy="90" r="34" fill="#fdba74" opacity=".48"/>
+  <circle cx="392" cy="370" r="52" fill="#fb923c" opacity=".2"/>
+  <g filter="url(#shadow)">
+    <rect x="78" y="162" width="158" height="176" rx="35" fill="url(#charger)"/>
+    <rect x="121" y="128" width="15" height="44" rx="7" fill="#64748b"/>
+    <rect x="177" y="128" width="15" height="44" rx="7" fill="#64748b"/>
+    <rect x="116" y="215" width="82" height="13" rx="6" fill="#94a3b8"/>
+    <rect x="141" y="263" width="32" height="29" rx="7" fill="#334155"/>
+    <path d="M157 338v36c0 29 23 51 52 51h22c31 0 52-22 52-51v-20" fill="none" stroke="#f97316" stroke-width="13" stroke-linecap="round"/>
+    <rect x="274" y="187" width="128" height="151" rx="38" fill="url(#charger)"/>
+    <path d="M296 244c0-35 25-62 57-62s57 27 57 62" fill="none" stroke="#94a3b8" stroke-width="9" stroke-linecap="round"/>
+    <g transform="rotate(-18 303 141)">
+      <path d="M285 115c0-25 18-44 40-44s40 19 40 44v21c0 17-13 30-29 30h-22c-16 0-29-13-29-30z" fill="url(#bud)"/>
+      <rect x="303" y="146" width="16" height="49" rx="8" fill="#cbd5e1"/>
+      <circle cx="325" cy="117" r="11" fill="#fff" opacity=".8"/>
+    </g>
+    <g transform="rotate(15 388 135)">
+      <path d="M355 108c0-23 17-41 38-41s38 18 38 41v23c0 17-13 30-29 30h-18c-16 0-29-13-29-30z" fill="url(#bud)"/>
+      <rect x="379" y="146" width="16" height="48" rx="8" fill="#cbd5e1"/>
+      <circle cx="396" cy="111" r="10" fill="#fff" opacity=".8"/>
+    </g>
+  </g>
+  <path d="M66 409h348" stroke="#fff" stroke-width="2" opacity=".62"/>
+</svg>

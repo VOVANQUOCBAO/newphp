@@ -1,0 +1,627 @@
+/* ========================================================
+   THEME STYLING - ĐIỆN THOẠI Z (SAMSUNG & THẾ GIỚI DI ĐỘNG STYLE)
+   Tone: Xanh Dương - Trắng Hiện Đại | Bo Góc Tròn Mềm Mại
+   ======================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800&family=Montserrat:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap');
+
+:root {
+    --primary-blue: #0056b3;
+    --primary-blue-dark: #003e82;
+    --primary-blue-light: #e7f1ff;
+    --primary-blue-hover: #004494;
+    --tgdd-accent: #ffd400;
+    --sale-red: #d70018;
+    --sale-red-bg: #fff0f1;
+    --stock-green: #008744;
+    --bg-light: #f4f6f9;
+    --text-main: #212529;
+    --text-muted: #6c757d;
+    --card-radius: 16px;
+    --card-shadow: 0 4px 16px rgba(0, 86, 179, 0.08);
+    --card-hover-shadow: 0 14px 28px rgba(0, 86, 179, 0.16);
+    --transition-smooth: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    --current-font: 'Segoe UI', 'Be Vietnam Pro', Tahoma, sans-serif;
+}
+
+/* ========================================================
+   CÁC CHỦ ĐỀ GIAO DIỆN THEO MÙA [17/6] [24/6]
+   ======================================================== */
+body.theme-spring {
+    --primary-blue: #d70018;
+    --primary-blue-dark: #b30012;
+    --primary-blue-light: #fff0f1;
+    --primary-blue-hover: #c00015;
+    --bg-light: #fff2f2;
+    background-color: #fff2f2 !important;
+    background-image: 
+        radial-gradient(rgba(255, 215, 0, 0.4) 1.5px, transparent 1.5px), 
+        radial-gradient(rgba(215, 0, 24, 0.15) 1.2px, #fff2f2 1.2px);
+    background-size: 28px 28px;
+    background-position: 0 0, 14px 14px;
+}
+
+body.theme-summer {
+    --primary-blue: #0984e3;
+    --primary-blue-dark: #00cec9;
+    --primary-blue-light: #e0f7fa;
+    --bg-light: #f0faff;
+}
+
+body.theme-autumn {
+    --primary-blue: #d35400;
+    --primary-blue-dark: #b94600;
+    --primary-blue-light: #fdebd0;
+    --bg-light: #faf5ed;
+}
+
+body.theme-winter {
+    --primary-blue: #2980b9;
+    --primary-blue-dark: #1f618d;
+    --primary-blue-light: #ebf5fb;
+    --bg-light: #f4f7f9;
+}
+
+/* Tùy chỉnh Font chữ */
+body.font-segoe { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+body.font-bevietnam { font-family: 'Be Vietnam Pro', sans-serif; }
+body.font-roboto { font-family: 'Roboto', sans-serif; }
+body.font-montserrat { font-family: 'Montserrat', sans-serif; }
+
+/* Tùy chỉnh Nền (Background) */
+body.bg-light-gray { background-color: #f4f6f9 !important; }
+body.bg-white-pure { background-color: #ffffff !important; }
+body.bg-soft-blue { background-color: #eaf2fc !important; }
+
+body {
+    background-color: var(--bg-light);
+    color: var(--text-main);
+    font-family: var(--current-font);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================================================
+   BANNER TRƯỢT CAROUSEL (FULL-WIDTH)
+   ======================================================== */
+.carousel-fullwidth {
+    width: 100%;
+    margin-bottom: 2.5rem;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.carousel-fullwidth .carousel-item {
+    height: 480px;
+    background-color: #0b1526;
+}
+
+.carousel-fullwidth .carousel-item img,
+.carousel-fullwidth .carousel-item svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@media (max-width: 768px) {
+    .carousel-fullwidth .carousel-item {
+        height: 250px;
+    }
+}
+
+/* ========================================================
+   KHỐI NỔI BẬT & TIÊU ĐỀ
+   ======================================================== */
+.border-blue {
+    border: 2px solid var(--primary-blue) !important;
+}
+
+.highlight-section {
+    border-radius: var(--card-radius);
+    background: #ffffff;
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.highlight-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-blue), #00c6ff, var(--sale-red));
+}
+
+.section-title-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--primary-blue);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ========================================================
+   THẺ SẢN PHẨM (PRODUCT CARD) - CHUẨN SAMSUNG & TGDD
+   ======================================================== */
+.product-card {
+    border: 1px solid #e9ecef !important;
+    border-radius: var(--card-radius) !important;
+    background: #ffffff;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.product-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--card-hover-shadow) !important;
+    border-color: rgba(0, 86, 179, 0.3) !important;
+}
+
+.product-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    padding: 1.25rem 1rem 0.5rem;
+    text-align: center;
+    background: #ffffff;
+}
+
+.product-card img {
+    max-height: 190px;
+    width: auto;
+    max-width: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+}
+
+.product-card:hover img {
+    transform: scale(1.07);
+}
+
+.product-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2b2b2b;
+    line-height: 1.4;
+    height: 2.8em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.product-title:hover {
+    color: var(--primary-blue);
+}
+
+/* Nhãn dán (Badge) */
+.product-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 8px;
+    z-index: 3;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.badge-tag-sale {
+    background-color: var(--sale-red);
+    color: #ffffff;
+}
+
+.badge-tag-new {
+    background-color: #0d6efd;
+    color: #ffffff;
+}
+
+.badge-tag-hot {
+    background: linear-gradient(45deg, #ff416c, #ff4b2b);
+    color: #ffffff;
+}
+
+.badge-tag-stock {
+    background-color: #6c757d;
+    color: #ffffff;
+}
+
+/* Nút Thêm vào giỏ hàng */
+.btn-add-cart {
+    background: linear-gradient(135deg, var(--primary-blue), #0077ff);
+    color: #ffffff !important;
+    border: none;
+    border-radius: 10px;
+    padding: 0.55rem 1rem;
+    font-weight: 600;
+    font-size: 0.88rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: var(--transition-smooth);
+    width: 100%;
+}
+
+.btn-add-cart:hover {
+    background: linear-gradient(135deg, var(--primary-blue-dark), var(--primary-blue));
+    box-shadow: 0 6px 18px rgba(0, 86, 179, 0.4);
+    transform: translateY(-2px);
+}
+
+/* Hết hàng Card */
+.product-card.out-of-stock img {
+    filter: grayscale(80%);
+    opacity: 0.6;
+}
+
+/* ========================================================
+   THANH CÔNG CỤ THEME / SEASON TOOLBAR (HEADER)
+   ======================================================== */
+.theme-toolbar {
+    background-color: #003d82;
+    color: #ffffff;
+    font-size: 0.82rem;
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.theme-toolbar select {
+    background-color: rgba(255,255,255,0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 6px;
+    padding: 2px 8px;
+    font-size: 0.8rem;
+    outline: none;
+}
+
+.theme-toolbar select option {
+    background-color: #003d82;
+    color: #ffffff;
+}
+
+/* ========================================================
+   THANH MENU CHÍNH
+   ======================================================== */
+.navbar-main {
+    background-color: var(--primary-blue) !important;
+    box-shadow: 0 4px 12px rgba(0, 86, 179, 0.2);
+}
+
+.navbar-main .nav-link {
+    color: #ffffff !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+    padding: 0.6rem 1rem !important;
+    border-radius: 8px;
+    transition: var(--transition-smooth);
+}
+
+.navbar-main .nav-link:hover,
+.navbar-main .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.badge-cart-count {
+    background-color: var(--tgdd-yellow);
+    color: #000000;
+    font-weight: 700;
+    font-size: 0.75rem;
+    padding: 3px 7px;
+    border-radius: 10px;
+    margin-left: 4px;
+}
+
+/* ========================================================
+   TIMELINE THEO DÕI ĐƠN HÀNG (U8)
+   ======================================================== */
+.tracking-timeline {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    margin: 30px 0;
+}
+
+.tracking-timeline::before {
+    content: '';
+    position: absolute;
+    top: 24px;
+    left: 40px;
+    right: 40px;
+    height: 4px;
+    background-color: #dee2e6;
+    z-index: 1;
+}
+
+.timeline-step {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    width: 20%;
+}
+
+.timeline-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #ffffff;
+    border: 3px solid #dee2e6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+    font-size: 1.2rem;
+    color: #6c757d;
+    transition: var(--transition-smooth);
+}
+
+.timeline-step.completed .timeline-icon,
+.timeline-step.active .timeline-icon {
+    background-color: var(--primary-blue);
+    border-color: var(--primary-blue);
+    color: #ffffff;
+    box-shadow: 0 0 0 5px rgba(0, 86, 179, 0.2);
+}
+
+.timeline-step.active .timeline-title {
+    color: var(--primary-blue);
+    font-weight: 700;
+}
+
+/* ========================================================
+   CHATBOX AI THÔNG MINH (FOOTER)
+   ======================================================== */
+.ai-chat-bubble {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), #00c6ff);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    box-shadow: 0 8px 24px rgba(0, 86, 179, 0.4);
+    cursor: pointer;
+    z-index: 1040;
+    transition: var(--transition-smooth);
+}
+
+.ai-chat-bubble:hover {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.ai-chatbox-window {
+    position: fixed;
+    bottom: 95px;
+    right: 25px;
+    width: 380px;
+    max-width: 90vw;
+    height: 520px;
+    background: #ffffff;
+    border-radius: 20px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.2);
+    z-index: 1045;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    border: 2px solid var(--primary-blue);
+    animation: slideUp 0.3s ease forwards;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ai-chatbox-header {
+    background: linear-gradient(135deg, var(--primary-blue), #0077ff);
+    color: #ffffff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ai-chatbox-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-chatbox-footer {
+    padding: 12px 15px;
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+}
+
+.chat-bubble-msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.chat-bubble-bot {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.chat-bubble-user {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+/* ========================================================
+   ADMIN SIDEBAR & BẢNG QUẢN TRỊ
+   ======================================================== */
+.admin-sidebar {
+    background-color: #1a2232;
+    min-height: 100vh;
+    color: #cbd5e1;
+}
+
+.admin-sidebar .nav-link {
+    color: #94a3b8;
+    padding: 12px 18px;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition-smooth);
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+}
+
+.badge-alert-red {
+    background-color: #dc3545;
+    color: #ffffff;
+    animation: pulse 1.5s infinite;
+}
+
+.badge-alert-yellow {
+    background-color: #ffc107;
+    color: #000000;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+
+.ai-chatbox-header {
+    background: linear-gradient(135deg, var(--primary-blue), #0077ff);
+    color: #ffffff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ai-chatbox-body {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ai-chatbox-footer {
+    padding: 12px 15px;
+    background: #ffffff;
+    border-top: 1px solid #dee2e6;
+}
+
+.chat-bubble-msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.chat-bubble-bot {
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+}
+
+.chat-bubble-user {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+
+/* ========================================================
+   ADMIN SIDEBAR & BẢNG QUẢN TRỊ
+   ======================================================== */
+.admin-sidebar {
+    background-color: #1a2232;
+    min-height: 100vh;
+    color: #cbd5e1;
+}
+
+.admin-sidebar .nav-link {
+    color: #94a3b8;
+    padding: 12px 18px;
+    font-weight: 500;
+    border-radius: 8px;
+    margin: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: var(--transition-smooth);
+}
+
+.admin-sidebar .nav-link:hover,
+.admin-sidebar .nav-link.active {
+    background-color: var(--primary-blue);
+    color: #ffffff;
+}
+
+.badge-alert-red {
+    background-color: #dc3545;
+    color: #ffffff;
+    animation: pulse 1.5s infinite;
+}
+
+.badge-alert-yellow {
+    background-color: #ffc107;
+    color: #000000;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.6; }
+    100% { opacity: 1; }
+}
+}
+/* Keep navigation labels readable at intermediate widths. */
+.navbar-main .nav-link { white-space: nowrap; }

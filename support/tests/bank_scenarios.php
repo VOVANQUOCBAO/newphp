@@ -1,0 +1,137 @@
+<?php
+// Included only by the disposable-database integration suite. No bank API or transfer.
+$qrModel=new thanhtoan_qr();
+$qrAdmin=(int)$pdo->query("SELECT id FROM nhanvien WHERE vai_tro='SuperAdmin' AND trang_thai=1 LIMIT 1")->fetchColumn();
+$qrKh=khTest('qr-flow@test.local');
+$qrDm=$dm->them('QR flow tests');
+$qrSp=spTest($qrDm,'QR-FLOW-PHONE',100,100000);
+$qrVc='QR10K';
+vcTest($qrVc,['gia_tri'=>10000,'so_luong'=>20,'don_toi_thieu'=>100000]);
+function qrFixture(int $kh,int $sp,?string $voucher=null): array {
+    $key=bin2hex(random_bytes(32));
+    $r=(new donhang())->taoDon($kh,[$sp=>1],['dia_chi'=>'QR integration, do not ship','sdt'=>'0900000000','checkout_key'=>$key,'bank'=>[]],$voucher);
+    if (!$r['ok']) throw new RuntimeException(json_encode($r));
+    return $r+['key'=>$key];
+}
+function qrHtmlPost(string $base,string $cookie,string $act,array $data): array {
+    $ch=curl_init($base.'/controller/index.php?act='.$act);
+    curl_setopt_array($ch,[CURLOPT_POST=>true,CURLOPT_POSTFIELDS=>http_build_query($data),CURLOPT_RETURNTRANSFER=>true,
+        CURLOPT_HTTPHEADER=>['Cookie: '.$cookie],CURLOPT_USERAGENT=>'QRIntegrationBrowser',CURLOPT_TIMEOUT=>10]);
+    $body=curl_exec($ch);$status=curl_getinfo($ch,CURLINFO_HTTP_CODE);curl_close($ch);
+    return ['body'=>$body ?: '','status'=>$status];
+}
+$qrCookie='';
+request($base,$qrCookie,'dangnhap',['email'=>'qr-flow@test.local','mat_khau'=>'123456']);
+request($base,$qrCookie,'muangay',['id'=>$qrSp,'sl'=>1]);
+$qrPage=request($base,$qrCookie,'thanhtoan');
+$qrBeforeStock=ton($qrSp);$qrBeforeUses=(int)$vc->layTheoCode($qrVc)['so_luong'];
+$qrBeforeOrders=(int)$pdo->query('SELECT COUNT(*) FROM donhang')->fetchColumn();
+$quotePost=['intent'=>'voucher','ma_voucher'=>'  qr10k  ','phuong_thuc'=>'paypal','dia_chi'=>'kept address','sdt'=>'0900000000',
+    '_checkout_csrf'=>$qrPage['data']['checkoutToken'],'_order_key'=>$qrPage['data']['codCheckoutKey']];
+$qrQuote=request($base,$qrCookie,'thanhtoan',$quotePost);
+check('VOUCHER preview PayPal: khong bi chan boi nhanh COD', $qrQuote['status']===200 && ($qrQuote['data']['voucherQuote']['tong'] ?? null)===120000);
+$qrHtml=qrHtmlPost($base,$qrCookie,'thanhtoan',$quotePost);
+check('VOUCHER preview HTML giu form, khong tra JSON loi', $qrHtml['status']===200 && str_contains($qrHtml['body'],'Đã áp dụng QR10K') && str_contains($qrHtml['body'],'kept address') && str_contains($qrHtml['body'],'Chuyển khoản QR'));
+foreach (['cod','bank'] as $method) {
+    $quotePost['phuong_thuc']=$method;
+    $q=request($base,$qrCookie,'thanhtoan',$quotePost);
+    check('VOUCHER preview '.$method.': tong giam dung',($q['data']['voucherQuote']['tong'] ?? null)===120000);
+}
+check('VOUCHER preview khong tao don, giu kho hay tru luot',ton($qrSp)===$qrBeforeStock && (int)$vc->layTheoCode($qrVc)['so_luong']===$qrBeforeUses && (int)$pdo->query('SELECT COUNT(*) FROM donhang')->fetchColumn()===$qrBeforeOrders);
+$invalid=request($base,$qrCookie,'thanhtoan',array_replace($quotePost,['ma_voucher'=>'NO-SUCH-QR']));
+check('VOUCHER sai ma tra loi tren form va khong dat don',empty($invalid['data']['voucherQuote']['ok']) && $invalid['status']===200);
+$remove=request($base,$qrCookie,'thanhtoan',array_replace($quotePost,['intent'=>'remove_voucher']));
+check('VOUCHER bo ma khoi tong tien',($remove['data']['voucherQuote']['tong'] ?? null)===130000);
+check('VOUCHER mien ship khong ton luot voi hang da mien ship',empty($vc->kiemTra('SHIP','Gold',100000,0)['ok']));
+$usedVc=vcTest('QR-LAST',['so_luong'=>1,'gia_tri'=>10000]);
+$preview=request($base,$qrCookie,'thanhtoan',array_replace($quotePost,['ma_voucher'=>'QR-LAST']));
+$pdo->exec("UPDATE voucher SET so_luong=0 WHERE ma_code='QR-LAST'");
+$attempt=request($base,$qrCookie,'thanhtoan',array_replace($quotePost,['intent'=>'order','phuong_thuc'=>'bank','ma_voucher'=>'QR-LAST']));
+check('VOUCHER het luot giua preview va dat: tu choi, kho khong doi',!empty($preview['data']['voucherQuote']['ok']) && !empty($attempt['data']['loi']) && ton($qrSp)===$qrBeforeStock);
+$post=array_replace($quotePost,['intent'=>'order','phuong_thuc'=>'bank','ma_voucher'=>$qrVc]);
+$created=request($base,$qrCookie,'thanhtoan',$post);
+parse_str(parse_url($created['location'],PHP_URL_QUERY) ?: '',$params);$qrId=(int)($params['id'] ?? 0);
+$payment=$qrModel->lay($qrId,$qrKh);
+check('QR HTTP dat don -> DB -> QR snapshot, giam voucher va kho mot lan',$created['status']===302 && $payment && $payment['status']==='waiting' && (float)$payment['amount_vnd']===120000.0 && ton($qrSp)===$qrBeforeStock-1 && (int)$vc->layTheoCode($qrVc)['so_luong']===$qrBeforeUses-1);
+$mail=$pdo->query("SELECT noi_dung FROM email WHERE tieu_de='Xac nhan don hang #$qrId' ORDER BY id DESC LIMIT 1")->fetchColumn();
+check('QR thu xac nhan ghi dung chuyen khoan dang cho, khong ghi COD',is_string($mail) && str_contains($mail,'Chuyển khoản QR') && str_contains($mail,'Chờ chuyển khoản') && !str_contains($mail,'COD'));
+$again=request($base,$qrCookie,'thanhtoan',array_replace($post,['phuong_thuc'=>'cod']));
+check('QR HTTP nhan doi/cross-method khong tao them don', $again['location']===$created['location'] && ton($qrSp)===$qrBeforeStock-1);
+$qrDetail=requestHtml($base,$qrCookie,'/controller/index.php?act=bank&id='.$qrId);
+check('QR trang khach dung so tien/noi dung va khong co nut tu xac nhan da tra',str_contains($qrDetail['body'],$payment['transfer_content']) && str_contains($qrDetail['body'],'amount=120000') && str_contains($qrDetail['body'],'Tôi đã chuyển khoản'));
+$otherCookie='';
+$otherKh=khTest('qr-other@test.local');request($base,$otherCookie,'dangnhap',['email'=>'qr-other@test.local','mat_khau'=>'123456']);
+$other=request($base,$otherCookie,'bank&id='.$qrId);
+$otherReport=request($base,$otherCookie,'baochuyenkhoan',['id'=>$qrId]);
+check('QR khach khac khong xem/bao chuyen don cua nguoi khac',$other['status']===404 && $otherReport['status']===404 && $qrModel->lay($qrId)['status']==='waiting');
+$noCsrf=request($base,$qrCookie,'baochuyenkhoan',['id'=>$qrId,'_csrf'=>'']);
+$reportGet=request($base,$qrCookie,'baochuyenkhoan&id='.$qrId);
+check('QR bao chuyen bat buoc POST va CSRF',$noCsrf['status']===403 && $reportGet['status']===405);
+$reported=request($base,$qrCookie,'baochuyenkhoan',['id'=>$qrId]);
+request($base,$qrCookie,'baochuyenkhoan',['id'=>$qrId]);
+check('QR khach bao chuyen chi reported, khong paid va khong tru kho them',$reported['status']===302 && $qrModel->lay($qrId)['status']==='reported' && ton($qrSp)===$qrBeforeStock-1);
+check('QR reported khong huy va khong giao truoc doi soat',empty($dh->huyDon($qrId,$qrKh)['ok']) && empty($dh->capNhatTrangThai($qrId,donhang::XAC_NHAN)['ok']));
+$confirm=['id'=>$qrId,'tham_chieu'=>'QR-RECEIPT-1','so_tien'=>'120000','da_kiem_tra'=>'1'];
+$m=request($base,$managerCookie,'xacnhanqr',$confirm,$adminPath);
+$e=request($base,$employeeCookie,'xacnhanqr',$confirm,$adminPath);
+$n=request($base,$adminCookie,'xacnhanqr',array_replace($confirm,['_csrf'=>'']),$adminPath);
+$box=request($base,$adminCookie,'xacnhanqr',array_replace($confirm,['da_kiem_tra'=>'']),$adminPath);
+check('QR admin nhan tien: kiem tra quyen CSRF va checkbox',$m['status']===403 && $e['status']===403 && $n['status']===403 && !empty($box['data']['loi']) && $qrModel->lay($qrId)['status']==='reported');
+check('QR nhan sai tien thieu/thua bi tu choi',empty($qrModel->xacNhanNhan($qrId,$qrAdmin,'QR-SHORT',119999)['ok']) && empty($qrModel->xacNhanNhan($qrId,$qrAdmin,'QR-OVER',120001)['ok']));
+$ok=request($base,$adminCookie,'xacnhanqr',$confirm,$adminPath);
+$paid=$qrModel->lay($qrId);
+check('QR admin nhan du tien: luu reference nguoi va thoi diem',$paid['status']==='paid' && $paid['received_reference']==='QR-RECEIPT-1' && (int)$paid['confirmed_by']===$qrAdmin && !empty($paid['received_at']));
+$events=(int)$pdo->query('SELECT COUNT(*) FROM lichsu_donhang WHERE id_donhang='.$qrId)->fetchColumn();
+$repeat=$qrModel->xacNhanNhan($qrId,$qrAdmin,'QR-RECEIPT-1',120000);
+check('QR xac nhan lap cung ma khong ghi nhan 2 lan',$repeat['ok'] && $events===(int)$pdo->query('SELECT COUNT(*) FROM lichsu_donhang WHERE id_donhang='.$qrId)->fetchColumn());
+$second=qrFixture($qrKh,$qrSp);
+check('QR cung giao dich ngan hang khong duoc gan 2 don',empty($qrModel->xacNhanNhan((int)$second['id'],$qrAdmin,'QR-RECEIPT-1',130000)['ok']));
+$detail=requestHtml($base,$qrCookie,'/controller/index.php?act=bank&id='.$qrId);
+check('QR khach doc lai da nhan tien tu DB',str_contains($detail['body'],'Đã nhận tiền') && !str_contains($detail['body'],'alt="QR chuyển khoản'));
+check('QR paid khong huy truoc khi hoan',empty($dh->huyDon($qrId,$qrKh)['ok']));
+toiTrangThai($qrId,donhang::THANH_CONG);
+$return=$dh->yeuCauTra($qrId,$qrKh,'QR return test');
+$accept=$dh->capNhatTrangThai($qrId,donhang::TRA_HANG,'Received whole parcel',true,true);
+$returned=$qrModel->lay($qrId);$returnRow=$pdo->query('SELECT * FROM trahang WHERE id_donhang='.$qrId)->fetch();
+check('QR tra hang: nhan lai kho mot lan, danh dau cho hoan tien',$return['ok'] && $accept['ok'] && $returned['status']==='refund_due' && $returnRow['trang_thai_hoan']==='Chờ hoàn tiền');
+$returnStock=ton($qrSp);$returnUses=(int)$vc->layTheoCode($qrVc)['so_luong'];
+check('QR tra lap bi chan, kho va voucher khong hoan lap',empty($dh->capNhatTrangThai($qrId,donhang::TRA_HANG,'Repeat',true,true)['ok']) && ton($qrSp)===$returnStock && (int)$vc->layTheoCode($qrVc)['so_luong']===$returnUses);
+$refund=$qrModel->xacNhanHoan($qrId,$qrAdmin,'QR-REFUND-1');
+check('QR hoan tien: luu chung tu va dong bo yeu cau tra',$refund['ok'] && $qrModel->lay($qrId)['status']==='refunded' && $pdo->query('SELECT trang_thai_hoan FROM trahang WHERE id_donhang='.$qrId)->fetchColumn()==='Đã hoàn tiền');
+check('QR khong duoc ghi hoan thong qua luong COD',empty($dh->xacNhanHoanCOD($qrId,'FAKECODREF')['ok']));
+$cancelFixture=qrFixture($qrKh,$qrSp,$qrVc);$cid=(int)$cancelFixture['id'];$cancelStock=ton($qrSp);$cancelUses=(int)$vc->layTheoCode($qrVc)['so_luong'];
+$cancel=$dh->huyDon($cid,$qrKh,'Test cancel');
+check('QR chua chuyen duoc huy, hoan kho/voucher mot lan',$cancel['ok'] && $qrModel->lay($cid)['status']==='cancelled' && ton($qrSp)===$cancelStock+1 && (int)$vc->layTheoCode($qrVc)['so_luong']===$cancelUses+1);
+$late=$qrModel->xacNhanNhan($cid,$qrAdmin,'QR-LATE-1',120000);
+check('QR tien den sau huy: cho hoan, khong khoi phuc hay tru kho',$late['ok'] && $qrModel->lay($cid)['status']==='refund_due' && $dh->layTheoId($cid)['trang_thai']===donhang::DA_HUY && ton($qrSp)===$cancelStock+1);
+$qrModel->xacNhanHoan($cid,$qrAdmin,'QR-LATE-REFUND');
+$expires=qrFixture($qrKh,$qrSp);$xid=(int)$expires['id'];$expiredStock=ton($qrSp);
+$pdo->exec("UPDATE thanhtoan_qr SET expires_at=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE id_donhang=$xid");
+$dh->donQRHetHan();$dh->donQRHetHan();
+check('QR het han chua bao chuyen: huy va hoan kho mot lan',$qrModel->lay($xid)['status']==='cancelled' && ton($qrSp)===$expiredStock+1);
+$hold=qrFixture($qrKh,$qrSp);$hid=(int)$hold['id'];$qrModel->baoDaChuyen($hid,$qrKh);
+$pdo->exec("UPDATE thanhtoan_qr SET expires_at=DATE_SUB(NOW(),INTERVAL 1 MINUTE) WHERE id_donhang=$hid");
+$dh->donQRHetHan();
+check('QR da bao chuyen khong tu huy khi cho admin',$qrModel->lay($hid)['status']==='reported' && $dh->layTheoId($hid)['trang_thai']===donhang::CHO_XAC_NHAN);
+$noMoney=$qrModel->khongNhanTien($hid,$qrAdmin);$dh->donQRHetHan();
+check('QR admin doi soat chua nhan tien: don het han duoc giai phong',$noMoney['ok'] && $qrModel->lay($hid)['status']==='cancelled');
+$raceFixture=qrFixture($qrKh,$qrSp);$rid=(int)$raceFixture['id'];$raceStock=ton($qrSp);
+$raceResults=race('qr-race',[['op'=>'receive','don'=>$rid,'admin'=>$qrAdmin,'kh'=>$qrKh],['op'=>'cancel','don'=>$rid,'kh'=>$qrKh,'admin'=>$qrAdmin]]);
+$racePay=$qrModel->lay($rid);$raceOrder=$dh->layTheoId($rid);
+check('QR canh tranh nhan tien/huy: khong mat tien, kho dung mot lan',($raceOrder['trang_thai']===donhang::DA_HUY && $racePay['status']==='refund_due' && ton($qrSp)===$raceStock+1)
+    || ($raceOrder['trang_thai']===donhang::CHO_XAC_NHAN && $racePay['status']==='paid' && ton($qrSp)===$raceStock));
+// Same checkout key must remain idempotent even after its voucher is exhausted.
+$retryFixture=qrFixture($qrKh,$qrSp,'QR10K');$retryStock=ton($qrSp);$pdo->exec("UPDATE voucher SET so_luong=0 WHERE ma_code='QR10K'");
+$retry=$dh->taoDon($qrKh,[$qrSp=>1],['dia_chi'=>'Repeat','sdt'=>'0900000000','checkout_key'=>$retryFixture['key'],'bank'=>[]],'QR10K');
+check('QR retry sau voucher het luot van lay dung don cu',$retry['ok'] && (int)$retry['id']===(int)$retryFixture['id'] && ton($qrSp)===$retryStock);
+$paidCancel=qrFixture($qrKh,$qrSp);$pcid=(int)$paidCancel['id'];$pcs=ton($qrSp);
+$qrModel->xacNhanNhan($pcid,$qrAdmin,'PAID-CANCEL-RECEIPT',130000);
+$ref=$qrModel->xacNhanHoan($pcid,$qrAdmin,'PAID-CANCEL-REFUND');
+check('QR da hoan khong duoc chuyen sang giao', $ref['ok'] && empty($dh->capNhatTrangThai($pcid,donhang::XAC_NHAN)['ok']));
+$cancel=$dh->huyDon($pcid,$qrKh,'Refund completed');
+check('QR hoan roi huy: giu chung tu va hoan kho dung mot lan',$cancel['ok'] && $qrModel->lay($pcid)['status']==='refunded' && ton($qrSp)===$pcs+1);
+vcTest('QR100',['loai'=>'phantram','gia_tri'=>100,'so_luong'=>3]);
+$pdo->exec("UPDATE khachhang SET hang='Gold',diem=500 WHERE id=$qrKh");
+$zeroStock=ton($qrSp);
+$zero=$dh->taoDon($qrKh,[$qrSp=>1],['dia_chi'=>'Zero test','sdt'=>'0900000000','checkout_key'=>bin2hex(random_bytes(32)),'bank'=>[]],'QR100');
+check('QR tong 0d khong tao QR, rollback kho va voucher',empty($zero['ok']) && ton($qrSp)===$zeroStock && (int)$vc->layTheoCode('QR100')['so_luong']===3);
