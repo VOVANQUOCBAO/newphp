@@ -1,14 +1,15 @@
 <?php
 
 require_once __DIR__ . '/xl_database.php';
+require_once __DIR__ . '/chinhsach_thanhvien.php';
 
 class khachhang extends xl_database
 {
     public const HANG_SILVER = 'Silver';
     public const HANG_GOLD = 'Gold';
     public const HANG_DIAMOND = 'Diamond';
-    public const NGUONG_GOLD = 500;
-    public const NGUONG_DIAMOND = 2000;
+    public const NGUONG_GOLD = chinhsach_thanhvien::NGUONG_GOLD;
+    public const NGUONG_DIAMOND = chinhsach_thanhvien::NGUONG_DIAMOND;
 
     public function layDS(): array
     {
@@ -180,6 +181,21 @@ class khachhang extends xl_database
         return ['ok' => true];
     }
 
+    public function luuHoSo(int $id,array $data): array
+    {
+        $name=trim((string)($data['ho_ten'] ?? ''));
+        $phone=trim((string)($data['sdt'] ?? ''));
+        $address=trim((string)($data['dia_chi'] ?? ''));
+        $birthday=$data['ngay_sinh'] ?? null;
+        if ($birthday==='') $birthday=null;
+        if ($name==='' || mb_strlen($name)>150 || mb_strlen($address)>255
+            || ($phone!=='' && !preg_match('/^\+?[0-9][0-9 .()\-]{7,18}$/D',$phone))
+            || ($birthday!==null && (!$this->ngayHopLe($birthday) || $birthday>date('Y-m-d')))) return ['ok'=>false,'loi'=>'Kiểm tra lại họ tên, số điện thoại, ngày sinh và địa chỉ.'];
+        if (!$this->selectOne('SELECT id FROM khachhang WHERE id=? AND trang_thai=1',[$id])) return ['ok'=>false,'loi'=>'Tài khoản không còn hoạt động.'];
+        $this->update('khachhang',['ho_ten'=>$name,'sdt'=>$phone?:null,'dia_chi'=>$address?:null,'ngay_sinh'=>$birthday],'id=?',[$id]);
+        return ['ok'=>true];
+    }
+
     public function khoa(int $id): array
     {
         if (!$this->layTheoId($id)) return ['ok'=>false,'loi'=>'Không tìm thấy khách hàng'];
@@ -200,7 +216,7 @@ class khachhang extends xl_database
             return ['ok' => false, 'loi' => 'Tong tien tinh diem khong hop le'];
         }
         // Mot lenh UPDATE nguyen tu, khong lam mat diem khi hai don hoan tat cung luc.
-        $cong = (int) floor($tongTien / 1000);
+        $cong = chinhsach_thanhvien::tinhDiem($tongTien);
         $this->execute('UPDATE khachhang SET hang = CASE WHEN diem + ? >= ? THEN ?
             WHEN diem + ? >= ? THEN ? ELSE ? END, diem = diem + ? WHERE id = ?',
             [$cong, self::NGUONG_DIAMOND, self::HANG_DIAMOND, $cong, self::NGUONG_GOLD,
@@ -254,10 +270,6 @@ class khachhang extends xl_database
 
     public function quyenLoiHang(string $hang): array
     {
-        return match ($hang) {
-            self::HANG_DIAMOND => ['mien_ship' => true, 'mo_ta' => 'Kim cuong: mien ship, nhieu voucher'],
-            self::HANG_GOLD => ['mien_ship' => true, 'mo_ta' => 'Vang: mien ship, uu dai voucher'],
-            default => ['mien_ship' => false, 'mo_ta' => 'Bac: hang mac dinh'],
-        };
+        return chinhsach_thanhvien::quyenLoi($hang);
     }
 }

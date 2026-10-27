@@ -381,7 +381,10 @@ try {
     $pdo->exec('DROP TRIGGER test_fail_points');
     check('Loi cong diem rollback ca trang thai don', !$fail['ok'] && $dh->layTheoId($atomicDon['id'])['trang_thai'] === donhang::DA_GIAO
         && (int) $kh->layTheoId($idKh)['diem'] === $diemTruoc);
-    check('Chan xoa SP da co giao dich va danh muc con SP', !$sp->xoa($idSp)['ok'] && !$dm->xoa($idDm)['ok']);
+    $archiveResult = $sp->xoa($idSp);
+    check('Xoa SP da giao dich chuyen ngung ban, giu danh muc va don cu', $archiveResult['ok'] && $archiveResult['ngung_ban']
+        && $sp->layChiTiet($idSp) === null && !$dm->xoa($idDm)['ok'] && $dh->layTheoId($idDon) !== null);
+    check('Mo ban lai SP da ngung ban', $sp->moBanLai($idSp)['ok'] && $sp->layChiTiet($idSp) !== null);
     $idChuaBan = spTest($idDm, 'CHUABAN', 1);
     $dg->them($idChuaBan, $idKh, 5, 'Danh gia truoc khi mua');
     $km->them(array_replace($kmData, ['id_sanpham' => $idChuaBan]));
@@ -389,9 +392,10 @@ try {
     $dgR = $dg->them($idSp, $idKh, 5, 'Tot');
     $dg->khoa($dgR['id']);
     check('Danh gia bi khoa an khoi du lieu cong khai', $dg->layDSTheoSP($idSp) === []);
+    $mailCountBefore=count((new email())->layThuCuaKhach($idKh));
     $mail = (new xuly_email())->guiDonHang($idKh, $idDon, $dh->layTheoId($idDon), $don['dong']);
     check('Chua cau hinh SMTP: van luu hop thu va tra trang thai ro rang', $mail['ok'] && !$mail['smtp']['ok']
-        && count((new email())->layThuCuaKhach($idKh)) === 1);
+        && count((new email())->layThuCuaKhach($idKh)) === $mailCountBefore+1);
     $nv = new nhanvien();
     $nvR = $nv->them(['ho_ten' => 'Nhan vien', 'email' => 'nv@test.local', 'mat_khau' => 'TestPassword123']);
     $nv->doiTrangThai($nvR['id'], 0);
@@ -494,7 +498,7 @@ try {
     $adminId = (int) $nv->selectOne("SELECT id FROM nhanvien WHERE email = 'admin@local.test'")['id'];
     $adminRole = (string) $nv->layTheoId($adminId)['vai_tro'];
     $nv->update('nhanvien', ['vai_tro' => 'NhanVien'], 'id = ?', [$adminId]);
-    $r = request($base, $adminCookie, 'csdl', null, $adminPath);
+    $r = request($base, $adminCookie, 'themnhanvien', ['vai_tro'=>'SuperAdmin'], $adminPath);
     check('HTTP Admin bi thu hoi quyen sau khi vai tro thay doi trong CSDL',
         $r['status'] === 403);
     $nv->update('nhanvien', ['vai_tro' => $adminRole], 'id = ?', [$adminId]);
@@ -528,15 +532,15 @@ try {
         'admin_user' => 'employee-http@test.local', 'admin_pass' => 'EmployeePass123',
     ], $adminPath);
     $employeeAccess = request($base, $employeeCookie, 'csdl', null, $adminPath);
-    check('HTTP nhan vien dang nhap duoc nhung khong vao duoc muc CSDL',
-        $r['status'] === 302 && $employeeAccess['status'] === 403);
+    check('HTTP nhan vien dang nhap va tra cuu du lieu duoc',
+        $r['status'] === 302 && $employeeAccess['status'] === 200);
     $employeeProducts = requestHtml($base, $employeeCookie, '/controller/index.php?khu=admin&act=sanpham');
     $employeeTheme = request($base, $employeeCookie, 'giaodien', null, $adminPath);
     $employeeOrders = request($base, $employeeCookie, 'donhang', null, $adminPath);
-    check('HTTP nhan vien chi xem san pham, khong sua san pham hay vao nghiep vu khac',
+    check('HTTP nhan vien duoc sua san pham va vao nghiep vu cua hang',
         $employeeProducts['status'] === 200 && str_contains($employeeProducts['body'], 'Danh sách sản phẩm')
-        && !str_contains($employeeProducts['body'], 'id="spForm"')
-        && $employeeTheme['status'] === 403 && $employeeOrders['status'] === 403);
+        && str_contains($employeeProducts['body'], 'id="spForm"')
+        && $employeeTheme['status'] === 200 && $employeeOrders['status'] === 200);
 
     $managerCreate = request($base, $adminCookie, 'themnhanvien', [
         'ho_ten' => 'HTTP Manager',
@@ -559,13 +563,13 @@ try {
         $managerCreate['status'] === 200 && !empty($manager['ok'])
         && ($manager['nhanvien']['vai_tro'] ?? '') === nhanvien::ROLE_MANAGER
         && $managerLogin['status'] === 302);
-    check('HTTP QuanLy chi xem san pham/don/khach, duoc doi giao dien va khong sua du lieu',
+    check('HTTP QuanLy duoc xu ly san pham don khach va quan ly nhan vien',
         $managerProducts['status'] === 200 && str_contains($managerProducts['body'], 'Danh sách sản phẩm')
-        && !str_contains($managerProducts['body'], 'id="spForm"')
-        && $managerOrders['status'] === 200 && !str_contains($managerOrders['body'], 'act=capnhattrangthai')
-        && $managerCustomers['status'] === 200 && !str_contains($managerCustomers['body'], 'act=khoakhachhang')
+        && str_contains($managerProducts['body'], 'id="spForm"')
+        && $managerOrders['status'] === 200 && str_contains($managerOrders['body'], 'act=capnhattrangthai')
+        && $managerCustomers['status'] === 200 && str_contains($managerCustomers['body'], 'act=khoakhachhang')
         && $managerTheme['status'] === 200
-        && $managerStaff['status'] === 403 && $managerDatabase['status'] === 403);
+        && $managerStaff['status'] === 200 && $managerDatabase['status'] === 200);
     $managerAttemptStaff = request($base, $managerCookie, 'themnhanvien', [
         'ho_ten' => 'Escalation Attempt', 'email' => 'escalation@test.local',
         'mat_khau' => 'EscalationPass123', 'vai_tro' => nhanvien::ROLE_SUPER_ADMIN,
@@ -824,6 +828,10 @@ try {
     require __DIR__ . '/voucher_scope_scenarios.php';
     require __DIR__ . '/voucher_value_scenarios.php';
     require __DIR__ . '/admin_usability_scenarios.php';
+    require __DIR__ . '/product_archive_scenarios.php';
+    require __DIR__ . '/store_tools_scenarios.php';
+    require __DIR__ . '/oop_member_scenarios.php';
+    require __DIR__ . '/oop_refactor_scenarios.php';
     $r = request($base, $cookie, 'khongco');
     check('HTTP act khong ton tai tra 400', $r['status'] === 400);
     $r = request($base, $cookie, 'dangnhap', ['email' => ['x'], 'mat_khau' => '123456']);

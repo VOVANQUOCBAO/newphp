@@ -103,12 +103,13 @@ class xl_database extends csdl
             if (!password_needs_rehash($matKhauDb, PASSWORD_DEFAULT)) {
                 return true;
             }
-        } elseif (hash_equals($matKhauDb, $matKhau)
-            || (preg_match('/^[a-f0-9]{32}$/i', $matKhauDb) === 1
-                && hash_equals(strtolower($matKhauDb), md5($matKhau)))) {
-            $legacy = true;
         } else {
-            return false;
+            // Hash hiện đại phải được kiểm tra bằng password_verify, không so như mật khẩu thô.
+            if (password_get_info($matKhauDb)['algo'] !== null) return false;
+            $legacy = preg_match('/^[a-f0-9]{32}$/i', $matKhauDb) === 1
+                ? hash_equals(strtolower($matKhauDb), md5($matKhau))
+                : hash_equals($matKhauDb, $matKhau);
+            if (!$legacy) return false;
         }
 
         if ($legacy || password_needs_rehash($matKhauDb, PASSWORD_DEFAULT)) {

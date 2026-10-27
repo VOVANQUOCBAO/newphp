@@ -12,7 +12,7 @@ class csdl
 
     public static function cauHinh(): array
     {
-        $cfg = ['host' => '127.0.0.1', 'port' => 3306, 'dbname' => 'webbanhang_mvc',
+        $cfg = ['driver' => 'mysql', 'bridge_url' => '', 'bridge_token' => '', 'host' => '127.0.0.1', 'port' => 3306, 'dbname' => 'webbanhang_mvc',
             'user' => 'root', 'pass' => '', 'charset' => 'utf8mb4'];
         $file = dirname(__DIR__) . '/support/config/database.local.php';
         if (!is_file($file)) {
@@ -25,7 +25,7 @@ class csdl
             }
             $cfg = array_replace($cfg, $local);
         }
-        foreach (['host', 'port', 'dbname', 'user', 'pass', 'charset'] as $key) {
+        foreach (['driver', 'bridge_url', 'bridge_token', 'host', 'port', 'dbname', 'user', 'pass', 'charset'] as $key) {
             $env = getenv($key === 'dbname' ? 'DB_NAME' : 'DB_' . strtoupper($key));
             if ($env !== false) {
                 $cfg[$key] = $env;
@@ -52,6 +52,12 @@ class csdl
             return self::$shared;
         }
         $cfg = self::cauHinh();
+        if ($cfg['driver'] === 'https') {
+            require_once dirname(__DIR__) . '/support/lib/HttpsDatabase.php';
+            self::$shared = new HttpsDatabase($cfg['bridge_url'], $cfg['bridge_token'], $dbname ?? $cfg['dbname']);
+            return self::$shared;
+        }
+        if ($cfg['driver'] !== 'mysql') throw new RuntimeException('Database driver khong duoc ho tro');
         self::$shared = self::ketNoi($host ?? $cfg['host'], $dbname ?? $cfg['dbname'],
             $user ?? $cfg['user'], $pass ?? $cfg['pass'], $charset, $port ?? $cfg['port']);
         return self::$shared;

@@ -4,16 +4,17 @@ include __DIR__ . '/header_admin.php';
 $h = static fn($value): string => htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $dsSanPham = $ds_sanpham ?? [];
 $dsDanhMuc = $ds_danhmuc ?? [];
+$xemNgungBan = !empty($xem_ngung_ban);
 $formatTien = static fn($value): string => number_format((float) $value, 0, ',', '.') . ' đ';
 ?>
 
 <div class="container-fluid">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <div>
-            <?php if(!$isSuperAdmin): ?><p class="text-muted mb-0">Tài khoản hiện tại có quyền xem sản phẩm.</p><?php endif; ?>
+            <?php if(!$canManageStore): ?><p class="text-muted mb-0">Tài khoản hiện tại có quyền xem sản phẩm.</p><?php endif; ?>
 
         </div>
-        <?php if ($isSuperAdmin): ?>
+        <?php if ($canManageStore): ?>
         <button class="btn btn-outline-primary btn-sm rounded-pill px-3" type="button"
                 data-bs-toggle="modal" data-bs-target="#modalDanhMuc">
             <i class="fas fa-folder-open me-1"></i> Quản lý danh mục
@@ -34,7 +35,7 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
         </div>
     <?php endif; ?>
 
-    <?php if ($isSuperAdmin): ?>
+    <?php if ($canManageStore && !$xemNgungBan): ?>
     <details class="card mb-4" id="product-form-card" <?=!empty($loi)&&isset($_POST['ma_sp'])?'open':''?>>
         <summary class="card-header"><span id="form-title">Thêm sản phẩm</span></summary>
         <div class="card-body p-4">
@@ -77,8 +78,9 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
                         <div class="admin-subtle"><div class="row g-3 align-items-end"><div class="col-md-6"><p class="mb-0">Tồn khả dụng: <strong id="product-stock-current">0</strong></p><small>Chưa gồm hàng đã giữ cho đơn.</small></div><div class="col-md-6"><label for="form_nhap_them" class="form-label">Nhập thêm hàng</label><input type="number" id="form_nhap_them" name="nhap_them" disabled min="0" step="1" value="0" class="form-control"><small>Thêm số lượng này vào tổng nhập và tồn khả dụng.</small></div></div>
                         <details class="mt-3" id="product-stock-audit"><summary>Điều chỉnh giảm tồn sau kiểm kê</summary><label class="d-block my-2"><input type="checkbox" id="stock-adjust-enable"> Tôi cần ghi nhận chênh lệch sau kiểm kê</label><label for="form_sl_ton" class="form-label">Tồn khả dụng thực tế</label><input type="number" name="so_luong_ton" id="form_sl_ton" class="form-control" min="0" step="1" disabled required><small>Chỉ điều chỉnh giảm. Hàng nhập mới dùng ô Nhập thêm; không cộng hàng đang giữ cho đơn.</small></details></div>
                     </div>
+                    <div class="col-md-4"><label id="receipt-date-label" for="receipt-date" class="form-label">Ngày nhập hàng</label><input id="receipt-date" class="form-control" type="date" name="ngay_nhap" max="<?=date('Y-m-d')?>" value="<?=date('Y-m-d')?>" required><small>Ghi đợt mới khi tạo sản phẩm hoặc Nhập thêm lớn hơn 0.</small></div>
                     <div class="col-12"><h2 class="form-section-title">Ảnh sản phẩm</h2></div>
-                    <div class="col-12"><img id="form_image_preview" src="<?= $h(productImage(null)) ?>" alt="Ảnh sản phẩm đang chọn" style="width:90px;height:90px;object-fit:contain" class="border rounded" hidden></div>
+                    <div class="col-12"><img id="form_image_preview" src="<?= $h(view_helper::productImage(null)) ?>" alt="Ảnh sản phẩm đang chọn" style="width:90px;height:90px;object-fit:contain" class="border rounded" hidden></div>
                     <div class="col-md-6"><label class="form-label" for="form_anh">Tải ảnh chính</label><input class="form-control" type="file" id="form_anh" name="anh" accept="image/jpeg,image/png,image/webp"><small class="text-muted">JPG, PNG, WebP; tối đa 5 MB. Để trống để giữ ảnh cũ.</small></div>
                     <div class="col-md-6"><label class="form-label" for="form_album">Ảnh bổ sung</label><input class="form-control" type="file" id="form_album" name="album[]" multiple accept="image/jpeg,image/png,image/webp"><small class="text-muted">Tối đa 6 ảnh; chọn mới để thay album hiện tại.</small></div>
                     <input type="hidden" name="anh_phu" id="form_anh_phu">
@@ -105,11 +107,16 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
     </details>
     <?php endif; ?>
 
+    <nav class="d-flex flex-wrap gap-2 mb-3" aria-label="Trạng thái sản phẩm">
+        <a class="btn btn-sm <?= $xemNgungBan ? 'btn-outline-primary' : 'btn-primary' ?>" href="index.php?khu=admin&amp;act=sanpham" <?= !$xemNgungBan ? 'aria-current="page"' : '' ?>>Đang bán</a>
+        <a class="btn btn-sm <?= $xemNgungBan ? 'btn-primary' : 'btn-outline-primary' ?>" href="index.php?khu=admin&amp;act=sanpham&amp;trang_thai=ngungban" <?= $xemNgungBan ? 'aria-current="page"' : '' ?>>Đã ngừng bán</a>
+    </nav>
+    <?php if ($xemNgungBan): ?><p class="text-muted">Sản phẩm ở đây không xuất hiện trong cửa hàng và không thể đặt mua mới. Đơn cũ vẫn được xử lý, hủy hoặc trả theo quy định.</p><?php endif; ?>
     <?php $tableId='products-table';$searchPlaceholder='Tên, mã sản phẩm hoặc danh mục';$statusOptions=[];require __DIR__.'/_table_tools.php'; ?>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
         <div class="card-header bg-white py-3 px-4">
-            <h5 class="mb-0 fw-bold"><i class="fas fa-list text-primary me-2"></i>Danh sách sản phẩm (<?= count($dsSanPham) ?>)</h5>
+            <h5 class="mb-0 fw-bold"><i class="fas fa-list text-primary me-2"></i><?= $xemNgungBan ? 'Sản phẩm đã ngừng bán' : 'Danh sách sản phẩm' ?> (<?= count($dsSanPham) ?>)</h5>
         </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0 text-center" id="products-table">
@@ -119,15 +126,15 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
                         <th class="text-start">Tên sản phẩm</th>
                         <th>Danh mục</th>
                         <th>Giá</th>
-                        <th>Tổng nhập</th>
+                        <th>Tổng nhập</th><th>Ngày nhập đầu</th>
                         <th>Tồn kho</th>
                         <th>Đã bán</th><th>Hàng lỗi</th>
-                        <?php if ($isSuperAdmin): ?><th>Thao tác</th><?php endif; ?>
+                        <?php if ($canManageStore): ?><th>Thao tác</th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if ($dsSanPham === []): ?>
-                        <tr><td colspan="<?=$isSuperAdmin ? 9 : 8?>" class="text-muted py-4">Chưa có sản phẩm.<?=$isSuperAdmin ? ' Dùng biểu mẫu phía trên để thêm mới.' : ''?></td></tr>
+                        <tr><td colspan="<?=$canManageStore ? 9 : 8?>" class="text-muted py-4">Chưa có sản phẩm.<?=$canManageStore ? ' Dùng biểu mẫu phía trên để thêm mới.' : ''?></td></tr>
                     <?php endif; ?>
                     <?php foreach ($dsSanPham as $sp): ?>
                         <?php
@@ -151,22 +158,30 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
                         ?>
                         <tr data-admin-row>
                             <td><code><?= $h($sp['ma_sp']) ?></code></td>
-                            <td class="text-start fw-semibold"><a href="<?=$h(shopBase())?>/index.php?act=chitiet&amp;id=<?=(int)$sp['id']?>" target="_blank" rel="noopener"><?= $h($sp['ten_sp']) ?></a></td>
+                            <td class="text-start"><a class="d-flex align-items-center gap-2 fw-semibold" href="index.php?khu=admin&amp;act=chitietsanpham&amp;id=<?=(int)$sp['id']?>"><img src="<?=$h(view_helper::productImage($sp['hinh']))?>" width="56" height="56" loading="lazy" style="object-fit:contain" alt="<?=$h($sp['ten_sp'])?>"><span><?= $h($sp['ten_sp']) ?><small class="d-block fw-normal">Xem chi tiết</small></span></a></td>
                             <td><?= $h($sp['ten_danhmuc']) ?></td>
                             <td><?= $h($formatTien($sp['gia'])) ?></td>
-                            <td><?= (int) $sp['so_luong_goc'] ?></td>
+                            <td><?= (int) $sp['so_luong_goc'] ?></td><td><?=!empty($sp['ngay_nhap'])?$h(date('d/m/Y',strtotime($sp['ngay_nhap']))):'Chưa ghi nhận'?></td>
                             <td><span class="badge <?= $ton <= 5 ? 'bg-danger' : 'bg-success' ?>"><?= $ton ?></span></td>
                             <td><?= (int) $sp['da_ban'] ?></td><td><?=(int)$sp['so_luong_loi']?></td>
-                            <?php if ($isSuperAdmin): ?><td>
+                            <?php if ($canManageStore): ?><td>
                                 <div class="d-flex justify-content-center gap-1">
+                                    <?php if ($xemNgungBan): ?>
+                                    <form action="index.php?khu=admin&amp;act=mobanlaisanpham" method="POST" onsubmit="return confirm('Mở bán lại sản phẩm này trên cửa hàng?')">
+                                        <input type="hidden" name="_csrf" value="<?= $h($csrfToken) ?>">
+                                        <input type="hidden" name="id" value="<?= (int) $sp['id'] ?>">
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">Mở bán lại</button>
+                                    </form>
+                                    <?php else: ?>
                                     <button type="button" class="btn btn-outline-primary btn-sm"
                                             data-product="<?= $h($json) ?>" onclick="editSP(this)">Sửa</button>
                                     <form action="index.php?khu=admin&act=xoasanpham" method="POST"
-                                          onsubmit="return confirm('Chỉ xóa được sản phẩm chưa xuất hiện trong chi tiết đơn hàng. Tiếp tục?')">
+                                          onsubmit="return confirm('Gỡ sản phẩm khỏi danh sách bán? Nếu đã có giao dịch, sản phẩm sẽ chuyển sang Đã ngừng bán và giữ nguyên lịch sử đơn hàng. Sản phẩm chưa có giao dịch sẽ được xóa. Tiếp tục?')">
                                         <input type="hidden" name="_csrf" value="<?= $h($csrfToken) ?>">
                                         <input type="hidden" name="id" value="<?= (int) $sp['id'] ?>">
                                         <button type="submit" class="btn btn-outline-danger btn-sm">Xóa</button>
                                     </form>
+                                    <?php endif; ?>
                                 </div>
                             </td><?php endif; ?>
                         </tr>
@@ -177,7 +192,7 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
     </div>
 </div>
 
-<?php if ($isSuperAdmin): ?>
+<?php if ($canManageStore): ?>
 <div class="modal fade" id="modalDanhMuc" tabindex="-1" aria-labelledby="modalDanhMucLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content rounded-4 border-0 shadow">
@@ -246,6 +261,8 @@ $formatTien = static fn($value): string => number_format((float) $value, 0, ',',
 
 <script>
 function setProductMode(editing) {
+    document.getElementById('receipt-date').name=editing?'ngay_nhap_dot':'ngay_nhap';
+    document.getElementById('receipt-date-label').textContent=editing?'Ngày nhập đợt mới':'Ngày nhập hàng';
     document.getElementById('product-stock-edit').hidden = !editing;
     document.getElementById('stock-total-label').textContent = editing ? 'Tổng đã nhập' : 'Số lượng nhập ban đầu *';
     document.getElementById('stock-adjust-enable').checked = false;
@@ -273,7 +290,7 @@ function editSP(button) {
     document.getElementById('form_sl_ton').max = product.so_luong_ton;
     document.getElementById('form_han_su_dung').value = product.han_su_dung || '';
     document.getElementById('form_hinh').value = product.hinh || '';
-    document.getElementById('form_image_preview').src = <?=json_encode(shopBase() . '/view/image/')?> + (product.hinh || 'ai-phone-elegance.svg');
+    document.getElementById('form_image_preview').src = <?=json_encode(view_helper::shopBase() . '/view/image/')?> + (product.hinh || 'ai-phone-elegance.svg');
     document.getElementById('form_image_preview').hidden = !product.hinh;
     document.getElementById('product-stock-current').textContent = product.so_luong_ton;
     document.getElementById('form_mo_ta').value = product.mo_ta || '';
@@ -332,5 +349,5 @@ if (failedProduct) {
     }
 }
 </script>
-<script src="<?=$h(shopBase())?>/view/js/product-upload.js?v=20261021-403"></script>
+<script src="<?=$h(view_helper::shopBase())?>/view/js/product-upload.js?v=20261021-403"></script>
 

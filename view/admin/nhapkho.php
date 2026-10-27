@@ -1,0 +1,7 @@
+<?php include __DIR__.'/header_admin.php'; $h=static fn($s)=>htmlspecialchars((string)$s,ENT_QUOTES,'UTF-8'); ?>
+<div class="container-fluid"><p class="text-muted">Mỗi lần tạo sản phẩm hoặc nhập thêm hàng được ghi một dòng. Bản ghi cũ chưa có ngày nhập không được tự suy đoán thành lịch sử nhập hàng.</p>
+<a class="btn btn-primary mb-4" href="index.php?khu=admin&amp;act=sanpham">Nhập thêm tại sản phẩm</a>
+<?php $tableId='receipts-table';$searchPlaceholder='Mã, tên sản phẩm hoặc người nhập';$statusOptions=[];require __DIR__.'/_table_tools.php'; ?>
+<section class="card"><div class="card-header fw-bold">Lịch sử nhập hàng · 500 đợt gần nhất</div><div class="table-responsive"><table id="receipts-table" class="table table-hover mb-0"><thead><tr><th>Đợt</th><th>Ngày nhập</th><th>Sản phẩm</th><th>Số lượng nhập</th><th>Người ghi nhận</th><th>Ghi chú</th><th>Lưu lúc</th></tr></thead><tbody>
+<?php foreach($receipts as $r): ?><tr data-admin-row><td>#<?=(int)$r['id']?></td><td><?=$h(date('d/m/Y',strtotime($r['ngay_nhap'])))?></td><td><code><?=$h($r['ma_sp'])?></code> · <?=$h($r['ten_sp'])?></td><td>+<?=(int)$r['so_luong']?></td><td><?=$h($r['nguoi_nhap'])?></td><td><?=$h($r['ghi_chu'])?></td><td><?=$h($r['ngay_tao'])?></td></tr><?php endforeach; ?>
+<?php if(!$receipts): ?><tr><td colspan="7" class="text-muted p-4">Chưa có đợt nhập được ghi nhận từ khi bật tính năng này.</td></tr><?php endif; ?></tbody></table></div></section></div>

@@ -1,0 +1,2 @@
+<?php include __DIR__.'/header_admin.php'; ?>
+<section class="card p-4"><h2 class="h4">Bật các tính năng mới</h2><p>Thêm cấu trúc lưu ngày nhập, lịch sử nhập hàng, hồ sơ, yêu thích và trạng thái thư cảm ơn thanh toán. Các đơn và dữ liệu cũ được giữ nguyên.</p><form action="index.php?khu=admin&amp;act=khoitaotienich" method="post"><input type="hidden" name="_csrf" value="<?=htmlspecialchars($csrfToken,ENT_QUOTES,'UTF-8')?>"><button class="btn btn-primary">Bật các tính năng mới</button></form></section>

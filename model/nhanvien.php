@@ -32,6 +32,8 @@ class nhanvien extends xl_database
         $hoTen = trim((string) ($data['ho_ten'] ?? ''));
         $matKhau = (string) ($data['mat_khau'] ?? '');
         $vaiTro = (string) ($data['vai_tro'] ?? self::ROLE_EMPLOYEE);
+        $actorRole=(string)($_SESSION['admin']['vai_tro'] ?? '');
+        if ($actorRole!=='' && !self::laSuperAdmin($actorRole) && self::laSuperAdmin($vaiTro)) return ['ok'=>false,'loi'=>'Chỉ quản trị viên được tạo tài khoản quản trị.'];
         if ($email === '' || $hoTen === '' || $matKhau === '') {
             return ['ok' => false, 'loi' => 'Thieu thong tin nhan vien'];
         }
@@ -72,6 +74,9 @@ class nhanvien extends xl_database
         if ($nhanVien === null) {
             return ['ok' => false, 'loi' => 'Không tìm thấy nhân viên'];
         }
+        $actor=$this->layTheoId($actorId);
+        if (!$actor || (int)$actor['trang_thai']!==1
+            || (!self::laSuperAdmin((string)$actor['vai_tro']) && (self::laSuperAdmin($vaiTro) || self::laSuperAdmin((string)$nhanVien['vai_tro'])))) return ['ok'=>false,'loi'=>'Không được cấp quyền quản trị hoặc thay đổi tài khoản quản trị.'];
 
         if ((int) $nhanVien['trang_thai'] === 1
             && self::laSuperAdmin((string) $nhanVien['vai_tro'])

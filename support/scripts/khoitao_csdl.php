@@ -13,8 +13,10 @@ try {
     $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$cfg['dbname']}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
     $pdo->exec("USE `{$cfg['dbname']}`");
     $pdo->exec(file_get_contents(dirname(__DIR__, 2) . '/database/schema.sql'));
+    require_once __DIR__.'/migrate_store_tools.php';
+    migration_store_tools::run($pdo);
     require_once __DIR__ . '/migrate_flow.php';
-    migrateFlow($pdo);
+    migration_flow::run($pdo);
     $customerColumns = $pdo->query('SHOW COLUMNS FROM khachhang')->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('ten_dang_nhap', $customerColumns, true)) {
         $pdo->exec('ALTER TABLE khachhang ADD COLUMN ten_dang_nhap VARCHAR(100) NULL AFTER ho_ten');

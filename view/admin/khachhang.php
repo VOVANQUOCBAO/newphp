@@ -4,9 +4,10 @@ $admin_url = 'index.php?khu=admin';
 $birthdayPosted=!empty($loi)&&isset($_POST['tieu_de'])?$_POST:[];
 ?>
 <div class="container-fluid">
+    <section class="card p-4 mb-4"><h2 class="h5">Quy tắc điểm và hạng thành viên</h2><p class="mb-2">Mỗi <?=number_format(chinhsach_thanhvien::VND_MOT_DIEM,0,',','.')?>đ tổng tiền đơn (sau giảm giá, gồm phí giao hàng) = 1 điểm, làm tròn xuống theo từng đơn. Chỉ cộng khi đơn “Thành công”; trả hàng thu hồi điểm đã cộng và xét lại hạng.</p><p class="mb-0">Silver (Bạc): 0–<?=chinhsach_thanhvien::NGUONG_GOLD-1?> điểm · Gold (Vàng): <?=chinhsach_thanhvien::NGUONG_GOLD?>–<?=chinhsach_thanhvien::NGUONG_DIAMOND-1?> điểm · Diamond (Kim cương): từ <?=number_format(chinhsach_thanhvien::NGUONG_DIAMOND,0,',','.')?> điểm. Bấm “Xem cách tính” tại khách hàng để đối chiếu từng đơn.</p></section>
     <?php if ($loi !== null): ?><div class="alert alert-danger"><?=$e($loi)?></div><?php endif; ?>
     <?php if ($thongBao !== null): ?><div class="alert alert-success"><?=$e($thongBao)?></div><?php endif; ?>
-    <?php if ($isSuperAdmin): ?><details class="card mb-4" <?=$birthdayPosted?'open':''?>><summary class="card-header">Gửi thư theo ngày sinh</summary><div class="card-body"><p class="small text-muted">Chọn ít nhất một điều kiện ngày sinh. Thư được gửi đến các khách phù hợp; thao tác này không tạo mã giảm giá hay chuyển quà.</p>
+    <?php if ($canManageStore): ?><details class="card mb-4" <?=$birthdayPosted?'open':''?>><summary class="card-header">Gửi thư theo ngày sinh</summary><div class="card-body"><p class="small text-muted">Chọn ít nhất một điều kiện ngày sinh. Thư được gửi đến các khách phù hợp; thao tác này không tạo mã giảm giá hay chuyển quà.</p>
         <form action="<?=$admin_url?>&amp;act=guiquatang" method="post" class="row g-3">
             <input type="hidden" name="_csrf" value="<?=$e($csrfToken)?>">
             <div class="col-md-2"><label class="form-label">Ngày</label><input class="form-control" type="number" min="1" max="31" name="ngay" value="<?=$e($birthdayPosted['ngay'] ?? '')?>"></div>
@@ -19,13 +20,13 @@ $birthdayPosted=!empty($loi)&&isset($_POST['tieu_de'])?$_POST:[];
     </div></details><?php endif; ?>
     <?php $tableId='customers-table';$searchPlaceholder='Tên, email hoặc hạng thành viên';$statusOptions=['1'=>'Đang hoạt động','0'=>'Đã khóa'];require __DIR__.'/_table_tools.php'; ?>
     <section class="card mb-4"><div class="card-header fw-bold">Khách hàng (<?=count($ds_khachhang)?>)</div><div class="table-responsive">
-        <table class="table table-hover mb-0" id="customers-table"><thead><tr><th>ID</th><th>Khách hàng</th><th>Ngày sinh</th><th>Hạng / điểm</th><th>Đơn đã tạo / tổng giá trị</th><th>Trạng thái</th><?php if ($isSuperAdmin): ?><th></th><?php endif; ?></tr></thead>
+        <table class="table table-hover mb-0" id="customers-table"><thead><tr><th>ID</th><th>Khách hàng</th><th>Ngày sinh</th><th>Hạng / điểm</th><th>Đơn đã tạo / tổng giá trị</th><th>Trạng thái</th><?php if ($canManageStore): ?><th></th><?php endif; ?></tr></thead>
             <tbody><?php foreach ($ds_khachhang as $kh): ?><tr data-admin-row data-status="<?=(int)$kh['trang_thai']?>">
                 <td><?=$e($kh['id'])?></td><td><?=$e($kh['ho_ten'])?><br><small><?=$e($kh['email'])?></small></td>
-                <td><?=$e($kh['ngay_sinh'] ?? '—')?></td><td><?=$e($kh['hang'])?> / <?=$e($kh['diem'])?></td>
+                <td><?=$e($kh['ngay_sinh'] ?? '—')?></td><td><?=$e($kh['hang'])?> / <?=$e($kh['diem'])?><br><a href="<?=$admin_url?>&amp;act=diemthanhvien&amp;id=<?=(int)$kh['id']?>">Xem cách tính</a></td>
                 <td><?=$e($kh['tong_don'])?> đơn<br><?=number_format((float)$kh['tong_tien'], 0, ',', '.')?>đ</td>
                 <td><?=$kh['trang_thai'] ? 'Đang hoạt động' : 'Đã khóa'?></td>
-                <?php if ($isSuperAdmin): ?><td><form action="<?=$admin_url?>&amp;act=khoakhachhang" method="post">
+                <?php if ($canManageStore): ?><td><form action="<?=$admin_url?>&amp;act=khoakhachhang" method="post">
                     <input type="hidden" name="_csrf" value="<?=$e($csrfToken)?>">
                     <input type="hidden" name="id" value="<?=$e($kh['id'])?>"><input type="hidden" name="trang_thai" value="<?=$kh['trang_thai'] ? '0' : '1'?>">
                     <button class="btn btn-sm <?=$kh['trang_thai'] ? 'btn-outline-danger' : 'btn-outline-success'?>"><?=$kh['trang_thai'] ? 'Khóa' : 'Mở khóa'?></button>

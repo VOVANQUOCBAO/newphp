@@ -30,5 +30,15 @@
 *.sqlite
 *.sqlite3
 *.db
+**/node_modules/
+/support/tests/ketqua_bridge_local.json
+/support/tests/ketqua_tidb_cloud.json
+/support/tests/ketqua_tidb_migration.json
 Thumbs.db
 .DS_Store
+
+# Local design previews and nested service credentials.
+/output/
+**/.env
+**/.env.*
+!**/.env.example

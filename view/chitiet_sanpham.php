@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/helpers.php';
 $sp = $chitiet;
+$isFavorite = $isFavorite ?? false;
 $price = (float)($sp['gia_km'] ?? $sp['gia']);
 $oldPrice = (float)($sp['gia_goc'] ?? $sp['gia']);
 $stock = (int)$sp['so_luong_ton'];
@@ -12,9 +13,9 @@ $images = array_filter(array_merge([$sp['hinh']], preg_split('/\\R/', $sp['anh_p
     <?php if (isset($_GET['added'])): ?><div class="alert alert-success">Đã thêm vào giỏ hàng. <a href="index.php?act=giohang">Xem giỏ hàng</a></div><?php endif; ?>
     <div class="row g-4 mb-5">
         <div class="col-lg-6">
-            <div class="card p-4"><img id="mainProductImage" src="<?=$e(productImage($sp['hinh']))?>" alt="<?=$e($sp['ten_sp'])?>" style="width:100%;height:380px;object-fit:contain"></div>
+            <div class="card p-4"><img id="mainProductImage" src="<?=$e(view_helper::productImage($sp['hinh']))?>" alt="<?=$e($sp['ten_sp'])?>" style="width:100%;height:380px;object-fit:contain"></div>
             <?php if (count($images) > 1): ?><div class="d-flex flex-wrap gap-2 mt-3">
-                <?php foreach ($images as $image): ?><button type="button" class="btn btn-light border product-thumbnail" data-image="<?=$e(productImage($image))?>" aria-label="Xem ảnh sản phẩm"><img src="<?=$e(productImage($image))?>" alt="" width="64" height="64" style="object-fit:contain"></button><?php endforeach; ?>
+                <?php foreach ($images as $image): ?><button type="button" class="btn btn-light border product-thumbnail" data-image="<?=$e(view_helper::productImage($image))?>" aria-label="Xem ảnh sản phẩm"><img src="<?=$e(view_helper::productImage($image))?>" alt="" width="64" height="64" style="object-fit:contain"></button><?php endforeach; ?>
             </div><?php endif; ?>
         </div>
         <div class="col-lg-6">
@@ -22,9 +23,24 @@ $images = array_filter(array_merge([$sp['hinh']], preg_split('/\\R/', $sp['anh_p
             <h1 class="h2 fw-bold"><?=$e($sp['ten_sp'])?></h1>
             <p class="text-muted">Đã bán <?=(int)$sp['da_ban']?> · <?=$stock > 0 ? 'Còn ' . $stock . ' sản phẩm' : 'Tạm hết hàng'?></p>
             <div class="bg-light rounded-4 p-4 my-4">
-                <?php if ($oldPrice > $price): ?><del class="text-muted"><?=money($oldPrice)?></del><?php endif; ?>
-                <div class="fs-2 fw-bold text-danger"><?=money($price)?></div>
-                <?php if ($oldPrice > $price): ?><small>Tiết kiệm <?=money($oldPrice - $price)?></small><?php endif; ?>
+                <?php if ($oldPrice > $price): ?>
+                    <div class="product-detail-price-block">
+                        <div class="product-price-row product-price-row-original">
+                            <span class="product-price-label">Giá gốc</span>
+                            <del><?=view_helper::money($oldPrice)?></del>
+                        </div>
+                        <div class="product-price-row product-price-row-current">
+                            <span class="product-price-label">Giá khuyến mãi</span>
+                            <strong><?=view_helper::money($price)?></strong>
+                        </div>
+                        <small class="product-price-saving">Tiết kiệm <?=view_helper::money($oldPrice - $price)?></small>
+                    </div>
+                <?php else: ?>
+                    <div class="product-price-row product-price-row-current">
+                        <span class="product-price-label">Giá bán</span>
+                        <strong><?=view_helper::money($price)?></strong>
+                    </div>
+                <?php endif; ?>
             </div>
             <?php if (!empty($sp['bao_hanh'])): ?><p><strong>Bảo hành:</strong> <?=$e($sp['bao_hanh'])?></p><?php endif; ?>
             <form action="index.php?act=themgiohang" method="post">
@@ -37,6 +53,7 @@ $images = array_filter(array_merge([$sp['hinh']], preg_split('/\\R/', $sp['anh_p
                     <button type="submit" class="btn btn-outline-primary btn-lg" <?=$stock <= 0 ? 'disabled' : ''?>>Thêm vào giỏ hàng</button>
                 </div>
             </form>
+            <form action="index.php?act=luuyeuthich" method="post" class="mt-3"><input type="hidden" name="_csrf" value="<?=$e($userCsrf)?>"><input type="hidden" name="id_sanpham" value="<?=(int)$sp['id']?>"><button class="btn btn-outline-danger" name="luu" value="<?=$isFavorite?'0':'1'?>"><i class="<?=$isFavorite?'fas':'far'?> fa-heart me-1"></i><?=$isFavorite?'Bỏ yêu thích':'Thêm vào yêu thích'?></button></form>
         </div>
     </div>
     <div class="row g-4">
@@ -74,8 +91,8 @@ $images = array_filter(array_merge([$sp['hinh']], preg_split('/\\R/', $sp['anh_p
     <?php if (!empty($ds_lienquan)): ?><section class="my-5">
         <h2 class="h4 mb-3">Sản phẩm liên quan</h2>
         <div class="row g-3"><?php foreach ($ds_lienquan as $related): ?><div class="col-6 col-lg-3"><a class="card h-100 p-3 text-decoration-none" href="index.php?act=chitiet&amp;id=<?=(int)$related['id']?>">
-            <img src="<?=$e(productImage($related['hinh']))?>" alt="<?=$e($related['ten_sp'])?>" height="150" style="object-fit:contain">
-            <h3 class="h6 mt-3"><?=$e($related['ten_sp'])?></h3><strong class="text-danger"><?=money($related['gia_km'] ?? $related['gia'])?></strong>
+            <img src="<?=$e(view_helper::productImage($related['hinh']))?>" alt="<?=$e($related['ten_sp'])?>" height="150" style="object-fit:contain">
+            <h3 class="h6 mt-3"><?=$e($related['ten_sp'])?></h3><strong class="text-danger"><?=view_helper::money($related['gia_km'] ?? $related['gia'])?></strong>
         </a></div><?php endforeach; ?></div>
     </section><?php endif; ?>
 </main>

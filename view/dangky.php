@@ -9,7 +9,7 @@ $pendingName = $_SESSION['dangky_pending']['payload']['ho_ten'] ?? '';
             <div class="card border-0 shadow-sm rounded-4 overflow-hidden border-blue">
                 <div class="card-header bg-primary text-white text-center py-4">
                     <div class="display-6 mb-1"><i class="fas fa-user-plus"></i></div>
-                    <h4 class="fw-bold mb-0 text-uppercase">Đăng Ký Thành Viên ĐiệnThoạiZ</h4>
+                    <h4 class="fw-bold mb-0 text-uppercase">Tạo tài khoản BP Store</h4>
                     <p class="small opacity-75 mb-0">Tạo tài khoản để quản lý đơn hàng</p>
                 </div>
 
@@ -186,7 +186,6 @@ $pendingName = $_SESSION['dangky_pending']['payload']['ho_ten'] ?? '';
                                 <div>Khởi tạo hạng mặc định: <strong>Silver (Bạc)</strong>.</div>
                             </div>
 
-                            <!-- Nút Đăng Ký Lưu Ngay Vào CSDL -->
                             <div class="d-grid gap-2 mb-3">
                                 <button type="submit" name="action" value="dangky" class="btn btn-primary rounded-pill py-3 fw-bold shadow fs-5">
                                     <i class="fas fa-user-plus me-2"></i> Đăng ký tài khoản

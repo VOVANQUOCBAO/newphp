@@ -2,6 +2,11 @@
 $e = static fn(mixed $value): string => htmlspecialchars((string) ($value ?? ''), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $mailList = is_array($ds_thu ?? null) ? $ds_thu : [];
 $selectedMail = is_array($thuDangXem ?? null) ? $thuDangXem : null;
+$mailTypeLabel = static fn(string $type): string => match ($type) {
+    'phanhoi_khieunai' => 'Phản hồi khiếu nại',
+    'khieunai' => 'Khiếu nại',
+    default => $type,
+};
 ?>
 <main class="container my-5">
     <div class="mb-4">
@@ -18,7 +23,7 @@ $selectedMail = is_array($thuDangXem ?? null) ? $thuDangXem : null;
                         <a class="list-group-item list-group-item-action <?=$selectedMail && (int) $selectedMail['id'] === (int) $mail['id'] ? 'active' : ''?>" href="index.php?act=hopthu&amp;id=<?=(int) $mail['id']?>">
                             <div class="d-flex justify-content-between gap-2"><strong><?=$e($mail['tieu_de'])?></strong><small><?=$e($mail['ngay_gui'])?></small></div>
                             <div class="small text-truncate mt-1"><?=$e(mb_substr((string) $mail['noi_dung'], 0, 140))?></div>
-                            <span class="badge text-bg-light mt-2"><?=$e($mail['loai'])?></span>
+                            <span class="badge text-bg-light mt-2"><?=$e($mailTypeLabel((string)$mail['loai']))?></span>
                         </a>
                     <?php endforeach; ?>
                     <?php if ($mailList === []): ?><p class="text-muted p-3 mb-0">Hộp thư chưa có thư nào.</p><?php endif; ?>
@@ -30,7 +35,7 @@ $selectedMail = is_array($thuDangXem ?? null) ? $thuDangXem : null;
                 <?php if ($selectedMail): ?>
                     <div class="card-header bg-white">
                         <h2 class="h5 fw-bold mb-1"><?=$e($selectedMail['tieu_de'])?></h2>
-                        <small class="text-muted"><?=$e($selectedMail['ngay_gui'])?> · <?=$e($selectedMail['loai'])?></small>
+                        <small class="text-muted"><?=$e($selectedMail['ngay_gui'])?> · <?=$e($mailTypeLabel((string)$selectedMail['loai']))?></small>
                     </div>
                     <div class="card-body"><div class="text-break"><?=nl2br($e($selectedMail['noi_dung']))?></div></div>
                 <?php else: ?>

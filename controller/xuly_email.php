@@ -1,6 +1,7 @@
 <?php
 
 require_once dirname(__DIR__) . '/model/email.php';
+require_once dirname(__DIR__) . '/model/anh_sanpham.php';
 require_once dirname(__DIR__) . '/model/khachhang.php';
 require_once dirname(__DIR__) . '/model/chitietdonhang.php';
 
@@ -38,7 +39,8 @@ class xuly_email
             . "Chi tiet:\n{$dongText}";
 
         $idThu = (new email())->luuThu($idKh, $tieuDe, $noiDung, 'donhang');
-        $smtp = $this->guiSmtp($kh['email'] ?? '', $tieuDe, $noiDung);
+        // This is order acknowledgement only. Payment confirmation sends the thank-you email.
+        $smtp = ['ok'=>false,'loi'=>'Thư cảm ơn được gửi sau khi xác nhận nhận tiền.'];
         return ['ok' => true, 'id_thu' => $idThu, 'smtp' => $smtp];
     }
 
@@ -123,7 +125,7 @@ class xuly_email
             $mail->SMTPAuth = true;
             $mail->Username = $cfg['user'];
             $mail->Password = $cfg['pass'];
-            $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->SMTPSecure = (int)$cfg['port']===465 ? PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_SMTPS : PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
             $mail->Port = (int) $cfg['port'];
             $mail->Timeout = 10;
             $mail->CharSet = 'UTF-8';
@@ -132,7 +134,7 @@ class xuly_email
             $mail->Subject = $tieuDe;
             if ($htmlContent !== null) {
                 $mail->isHTML(true);
-                $mail->Body = $htmlContent;
+                $mail->Body = anh_sanpham::nhungVaoThu($mail, $htmlContent);
                 $mail->AltBody = $noiDung;
             } else {
                 $mail->Body = $noiDung;

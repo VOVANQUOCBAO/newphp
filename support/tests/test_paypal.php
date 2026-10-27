@@ -96,8 +96,12 @@ try {
     $fake->remote['status']='APPROVED';
     ppCheck('APPROVED is not a paid capture', $m->kiemTra($id,1)['status']==='approved'
         && empty((new donhang())->capNhatTrangThai($id,donhang::XAC_NHAN)['ok']));
+    ppCheck('Approved but unpaid order has no thank-you payment email', (int)$pdo->query('SELECT COUNT(*) FROM email_thanhtoan WHERE id_donhang='.$id)->fetchColumn()===0);
     $p=$m->capture($id,1); $again=$m->capture($id,1);
     ppCheck('COMPLETED capture verified and repeat does not charge twice', $p['status']==='paid' && $p['capture_id']===$again['capture_id'] && $fake->captures===1);
+    $receipt=$pdo->query('SELECT * FROM email_thanhtoan WHERE id_donhang='.$id)->fetch(PDO::FETCH_ASSOC);
+    ppCheck('Verified capture creates one payment receipt for the actual customer', $receipt && $receipt['nguoi_nhan']==='paypal@test.local'
+        && str_contains($receipt['noi_dung'],'PayPal') && (int)$pdo->query('SELECT COUNT(*) FROM email_thanhtoan WHERE id_donhang='.$id)->fetchColumn()===1);
     ppCheck('Paid PayPal cancellation requires refund; stock stays reserved', empty((new donhang())->huyDon($id,1)['ok'])
         && (int)$pdo->query('SELECT so_luong_ton FROM sanpham WHERE id='.$f['sp'])->fetchColumn()===9);
     ppCheck('Paid PayPal order can enter fulfilment', !empty((new donhang())->capNhatTrangThai($id,donhang::XAC_NHAN)['ok']));

@@ -44,7 +44,7 @@ $adminUrl = 'index.php?khu=admin';
                                         <select class="form-select form-select-sm" name="vai_tro" aria-label="Vai trò nhân viên">
                                             <option value="NhanVien" <?=$nhanVien['vai_tro'] === 'NhanVien' ? 'selected' : ''?>>Nhân viên</option>
                                             <option value="QuanLy" <?=$nhanVien['vai_tro'] === 'QuanLy' ? 'selected' : ''?>>Quản lý</option>
-                                            <option value="SuperAdmin">Quản trị viên — toàn quyền</option>
+                                            <?php if($isSuperAdmin): ?><option value="SuperAdmin">Quản trị viên — toàn quyền</option><?php endif; ?>
                                         </select>
                                         <button class="btn btn-sm btn-outline-primary">Lưu quyền</button>
                                     </form>
@@ -94,9 +94,9 @@ $adminUrl = 'index.php?khu=admin';
                     <div class="mb-3">
                         <label class="form-label" for="staffRole">Vai trò</label>
                         <select class="form-select" id="staffRole" name="vai_tro" required>
-                            <option value="NhanVien">Nhân viên — chỉ xem sản phẩm</option>
-                            <option value="QuanLy">Quản lý — xem sản phẩm/đơn/khách, đổi giao diện</option>
-                            <option value="SuperAdmin">Quản trị viên — toàn quyền</option>
+                            <option value="NhanVien">Nhân viên — nghiệp vụ cửa hàng</option>
+                            <option value="QuanLy">Quản lý — nghiệp vụ cửa hàng</option>
+                            <?php if($isSuperAdmin): ?><option value="SuperAdmin">Quản trị viên — toàn quyền</option><?php endif; ?>
                         </select>
                     </div>
                 </div>

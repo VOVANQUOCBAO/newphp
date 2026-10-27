@@ -29,6 +29,36 @@ class donhang extends xl_database
         self::THANH_CONG => [self::TRA_HANG], self::DA_HUY => [], self::BOM_HANG => [], self::TRA_HANG => [],
     ];
 
+    /** Các trạng thái có thể chọn trên màn hình quản trị. */
+    public static function trangThaiTiepTheo(array $order): array
+    {
+        $options = self::LUONG[$order['trang_thai']] ?? [];
+        $qr = $order['thanhtoan_qr'] ?? null;
+        if ($qr) {
+            if (in_array($qr['status'], ['waiting', 'refunded'], true)) {
+                $options = array_values(array_intersect($options, [self::DA_HUY]));
+            } elseif ($qr['status'] === 'reported') {
+                $options = [];
+            } elseif ($qr['status'] === 'paid') {
+                $options = array_values(array_diff($options, [self::DA_HUY]));
+            }
+        }
+        $paypal = $order['thanhtoan'] ?? null;
+        if ($paypal) {
+            $options = array_values(array_filter($options, static function (string $state) use ($paypal): bool {
+                if (in_array($state, [self::DA_HUY, self::TRA_HANG, self::BOM_HANG], true)) {
+                    return in_array($paypal['status'], ['created', 'awaiting', 'approved', 'failed', 'refunded'], true);
+                }
+                return $paypal['status'] === 'paid';
+            }));
+        }
+        if (in_array($order['trang_thai'], [self::DA_GIAO, self::THANH_CONG], true)
+            && ($order['tra_hang']['trang_thai'] ?? '') !== 'Chờ xử lý') {
+            $options = array_values(array_diff($options, [self::TRA_HANG]));
+        }
+        return $options;
+    }
+
     public function layTheoKhach(int $idKh): array
     {
         return $this->kemThanhToan($this->select('SELECT * FROM donhang WHERE id_khachhang = ? ORDER BY ngay_dat DESC, id DESC', [$idKh]));
@@ -56,6 +86,11 @@ class donhang extends xl_database
     public function layTheoId(int $id): ?array
     {
         return $this->selectOne('SELECT * FROM donhang WHERE id = ?', [$id]);
+    }
+
+    public function layTheoPhienDatHang(string $key, int $idKhach): ?array
+    {
+        return $this->selectOne('SELECT * FROM donhang WHERE checkout_key = ? AND id_khachhang = ?', [$key, $idKhach]);
     }
 
     public function layTrangThai(int $id): ?array
@@ -290,7 +325,7 @@ class donhang extends xl_database
                 if ($moi === self::TRA_HANG) $this->execute("UPDATE trahang SET trang_thai='Đã nhận hàng', phan_hoi=?, nhap_lai_kho=?, so_tien_hoan=?, trang_thai_hoan=?, tham_chieu_hoan=?, ngay_xu_ly=NOW() WHERE id_donhang=?", [$lyDo, (int)$nhapLai, $dh['tong_tien'], $payment !== null ? 'Đã hoàn tiền' : 'Chờ hoàn tiền', $payment['capture_id'] ?? null, $id]);
             }
             if ($moi === self::DA_GIAO) $fields['ngay_giao'] = date('Y-m-d H:i:s');
-            if ($moi === self::THANH_CONG) $fields['diem_da_cong'] = (int)floor((float)$dh['tong_tien']/1000);
+            if ($moi === self::THANH_CONG) $fields['diem_da_cong'] = chinhsach_thanhvien::tinhDiem((float)$dh['tong_tien']);
             $this->update('donhang', $fields, 'id = ?', [$id]);
             if ($moi === self::THANH_CONG) {
                 $diem = (new khachhang())->congDiemVaXetHang((int) $dh['id_khachhang'], (float) $dh['tong_tien']);
@@ -300,6 +335,7 @@ class donhang extends xl_database
             }
             $this->ghiLichSu($id, $dh['trang_thai'], $moi, $hetHan ? 'Hệ thống' : ($idKh !== null ? 'Khách #' . $idKh : 'Nhân viên #' . ($_SESSION['admin']['id'] ?? 0)), $lyDo);
             $this->commit();
+            if ($moi===self::THANH_CONG) { require_once __DIR__.'/thongbao_thanhtoan.php'; thongbao_thanhtoan::sauThanhToan($id); }
             return ['ok' => true];
         } catch (Throwable $e) {
             $this->rollback();

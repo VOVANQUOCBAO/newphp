@@ -1,20 +1,37 @@
 <?php
 
 require_once __DIR__ . '/xl_database.php';
+require_once __DIR__ . '/nhapkho.php';
 
 class sanpham extends xl_database
 {
-    public function layDSAdmin(): array
+    public function chiTietAdmin(int $id): ?array
+    {
+        $product = $this->selectOne('SELECT sp.*,dm.ten_danhmuc FROM sanpham sp JOIN danhmuc dm ON dm.id=sp.id_danhmuc WHERE sp.id=?', [$id]);
+        if ($product === null) return null;
+        $this->boSungThongTinReal($product);
+        $product['lichsu_kho'] = $this->select('SELECT thay_doi,ton_sau,ly_do,id_donhang,ngay_tao FROM lichsu_kho WHERE id_sanpham=? ORDER BY id DESC LIMIT 50', [$id]);
+        require_once dirname(__DIR__).'/support/scripts/migrate_store_tools.php';
+        $product['lichsu_nhap'] = migration_store_tools::ready($this->pdo) ? $this->select('SELECT so_luong,ngay_nhap,nguoi_nhap,ghi_chu FROM lichsu_nhap WHERE id_sanpham=? ORDER BY id DESC LIMIT 50', [$id]) : [];
+        return $product;
+    }
+
+    public function layDSAdmin(bool $ngungBan = false): array
     {
         return $this->select(
             'SELECT sp.*, dm.ten_danhmuc,
-                    COALESCE(SUM(ct.so_luong), 0) AS da_ban
+                    COALESCE(ban.da_ban, 0) AS da_ban
              FROM sanpham sp
              JOIN danhmuc dm ON dm.id = sp.id_danhmuc
-             LEFT JOIN (SELECT c.id_sanpham, c.so_luong FROM chitietdonhang c JOIN donhang d ON d.id=c.id_donhang WHERE d.trang_thai=\'Thành công\') ct ON ct.id_sanpham = sp.id
-             WHERE sp.ngung_ban = 0
-             GROUP BY sp.id
-             ORDER BY sp.ngay_tao DESC, sp.id DESC'
+             LEFT JOIN (
+                 SELECT c.id_sanpham, SUM(c.so_luong) AS da_ban
+                 FROM chitietdonhang c JOIN donhang d ON d.id=c.id_donhang
+                 WHERE d.trang_thai=\'Thành công\'
+                 GROUP BY c.id_sanpham
+             ) ban ON ban.id_sanpham = sp.id
+             WHERE sp.ngung_ban = ?
+             ORDER BY sp.id ASC',
+            [(int) $ngungBan]
         );
     }
 
@@ -168,8 +185,10 @@ class sanpham extends xl_database
                 'thong_so' => trim($data['thong_so'] ?? ''),
                 'bao_hanh' => trim($data['bao_hanh'] ?? ''),
                 'anh_phu' => trim($data['anh_phu'] ?? ''),
+                'ngay_nhap' => $data['ngay_nhap'] ?? date('Y-m-d'),
             ]);
             $this->ghiKho($id, $ton, 'Tạo sản phẩm');
+            (new nhapkho())->ghi($id,$goc,$data['ngay_nhap'] ?? date('Y-m-d'),'Nhập ban đầu');
             $this->commit();
         } catch (PDOException $e) {
             $this->rollback();
@@ -215,6 +234,10 @@ class sanpham extends xl_database
                 $this->rollback(); return ['ok'=>false,'loi'=>'Dùng ô Nhập thêm để tăng kho; tồn khả dụng chỉ dùng để điều chỉnh giảm khi kiểm kê.'];
             }
             $nhap = (int)($data['nhap_them'] ?? 0);
+            $ngayNhap = $data['ngay_nhap_dot'] ?? date('Y-m-d');
+            if ($nhap>0 && (!$this->ngayHopLe($ngayNhap) || $ngayNhap>date('Y-m-d'))) {
+                $this->rollback(); return ['ok'=>false,'loi'=>'Ngày nhập hàng không hợp lệ hoặc ở tương lai.'];
+            }
             $goc += $nhap;
             $ton += $nhap;
             if ($goc > 2147483647 || $ton > 2147483647) { $this->rollback(); return ['ok' => false, 'loi' => 'Số lượng vượt giới hạn lưu trữ']; }
@@ -242,6 +265,7 @@ class sanpham extends xl_database
                 $fields['ma_sp'] = $ma;
             }
             $this->update('sanpham', $fields, 'id = ?', [$id]);
+            if ($nhap>0) (new nhapkho())->ghi($id,$nhap,$ngayNhap,'Nhập thêm hàng');
             if ($ton !== (int)$sp['so_luong_ton']) $this->ghiKho($id, $ton - (int)$sp['so_luong_ton'], 'Kiểm kê bởi nhân viên #' . ($_SESSION['admin']['id'] ?? 0));
             $this->commit();
         } catch (PDOException $e) {
@@ -270,19 +294,46 @@ class sanpham extends xl_database
                 [$id]
             );
             if ((int) ($daBan['c'] ?? 0) > 0) {
-                $this->rollback();
-                return ['ok' => false, 'loi' => 'San pham da co giao dich, khong duoc xoa'];
+                $this->update('sanpham', ['ngung_ban' => 1], 'id = ?', [$id]);
+                $this->commit();
+                return ['ok' => true, 'ngung_ban' => true,
+                    'thong_bao' => 'Đã ngừng bán sản phẩm. Lịch sử đơn hàng, thanh toán và tồn kho được giữ nguyên.'];
             }
             $this->delete('danhgia', 'id_sanpham = ?', [$id]);
             $this->delete('khuyenmai', 'id_sanpham = ?', [$id]);
             $this->delete('lichsu_kho', 'id_sanpham = ?', [$id]);
+            $this->delete('lichsu_nhap', 'id_sanpham = ?', [$id]);
+            $this->delete('yeuthich', 'id_sanpham = ?', [$id]);
             $this->delete('sanpham', 'id = ?', [$id]);
             $this->commit();
-            return ['ok' => true];
+            return ['ok' => true, 'ngung_ban' => false, 'thong_bao' => 'Đã xóa sản phẩm chưa có giao dịch.'];
         } catch (Throwable $e) {
             $this->rollback();
             error_log('Xoa san pham: ' . $e->getMessage());
             return ['ok' => false, 'loi' => 'Không thể xóa sản phẩm vì dữ liệu đang được sử dụng'];
+        }
+    }
+
+    public function moBanLai(int $id): array
+    {
+        try {
+            $this->begin();
+            $sp = $this->selectOne('SELECT id, id_danhmuc FROM sanpham WHERE id = ? FOR UPDATE', [$id]);
+            if ($sp === null) {
+                $this->rollback();
+                return ['ok' => false, 'loi' => 'Không tìm thấy sản phẩm'];
+            }
+            if ($this->selectOne('SELECT id FROM danhmuc WHERE id = ? AND ngung_ban = 0', [$sp['id_danhmuc']]) === null) {
+                $this->rollback();
+                return ['ok' => false, 'loi' => 'Danh mục đã ngừng bán; chưa thể mở bán lại sản phẩm.'];
+            }
+            $this->update('sanpham', ['ngung_ban' => 0], 'id = ?', [$id]);
+            $this->commit();
+            return ['ok' => true];
+        } catch (Throwable $e) {
+            $this->rollback();
+            error_log('Mo ban lai san pham: ' . $e->getMessage());
+            return ['ok' => false, 'loi' => 'Không thể mở bán lại sản phẩm lúc này.'];
         }
     }
 
@@ -307,7 +358,8 @@ class sanpham extends xl_database
             return ['ok' => false, 'loi' => 'So luong khong hop le'];
         }
         $this->execute('UPDATE sanpham SET so_luong_ton = so_luong_ton + ? WHERE id = ?', [$sl, $id]);
-        $sp = $this->layChiTiet($id);
+        // Hàng ngừng bán vẫn có thể được hoàn kho khi hủy/trả đơn cũ.
+        $sp = $this->selectOne('SELECT so_luong_ton FROM sanpham WHERE id = ?', [$id]);
         return $sp === null ? ['ok' => false, 'loi' => 'Khong tim thay san pham']
             : ['ok' => true, 'so_luong_ton' => (int) $sp['so_luong_ton']];
     }
@@ -396,6 +448,7 @@ class sanpham extends xl_database
         if (!empty($data['han_su_dung']) && !$this->ngayHopLe($data['han_su_dung'])) {
             return 'Han su dung khong hop le';
         }
+        if (isset($data['ngay_nhap']) && (!$this->ngayHopLe($data['ngay_nhap']) || $data['ngay_nhap']>date('Y-m-d'))) return 'Ngày nhập hàng không hợp lệ hoặc ở tương lai.';
         foreach (['thuong_hieu' => 150, 'bao_hanh' => 255] as $field => $max) {
             if (mb_strlen((string)($data[$field] ?? '')) > $max) return 'Thông tin sản phẩm vượt độ dài cho phép';
         }

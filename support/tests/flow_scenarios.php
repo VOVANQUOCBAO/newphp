@@ -42,31 +42,31 @@ try {
     $stageEmployee = request($base, $employeeCookie, 'taianhsanpham', ['image'=>$encodedPng], $adminPath);
     $stageAnonymous = request($base, $anonymousCookie, 'taianhsanpham', ['image'=>$encodedPng], $adminPath);
     $stageGet = request($base, $adminCookie, 'taianhsanpham', null, $adminPath);
-    check('UPLOAD URL: bat buoc POST, CSRF va quyen sua san pham', $stageNoCsrf['status']===403 && $stageManager['status']===403
-        && $stageEmployee['status']===403 && $stageAnonymous['status']===302 && $stageGet['status']===405);
+    check('UPLOAD URL: bat buoc POST, CSRF va quyen sua san pham', $stageNoCsrf['status']===403 && $stageManager['status']===200 && !empty($stageManager['data']['ok'])
+        && $stageEmployee['status']===200 && !empty($stageEmployee['data']['ok']) && $stageAnonymous['status']===302 && $stageGet['status']===405);
     $stagedMain = request($base, $adminCookie, 'taianhsanpham', ['image'=>$encodedPng], $adminPath);
     $stagedGallery = request($base, $adminCookie, 'taianhsanpham', ['image'=>$encodedPng], $adminPath);
     $mainToken = $stagedMain['data']['upload_id'] ?? '';
     $galleryToken = $stagedGallery['data']['upload_id'] ?? '';
     check('UPLOAD URL: anh chinh/album duoc luu tam, khong lo duong dan', !empty($stagedMain['data']['ok']) && preg_match('/^[a-f0-9]{32}$/D',$mainToken)
-        && is_file(productStagePath($mainToken)) && !isset($stagedMain['data']['path']));
+        && is_file(product_upload::stagePath($mainToken)) && !isset($stagedMain['data']['path']));
     $urlPayload = ['ma_sp'=>'FLOW-URL-UP','ten_sp'=>'Flow URL encoded phone','id_danhmuc'=>$flowDm,'gia'=>500000,'so_luong_goc'=>2,'so_luong_ton'=>2,
         'mo_ta'=>'Mô tả qua URL-encoded','thong_so'=>'RAM: 8GB','thuong_hieu'=>'Flow','bao_hanh'=>'12 tháng',
         '_image_uploads'=>json_encode(['main'=>$mainToken,'gallery'=>[$galleryToken]])];
     $secondAdminCookie = '';
     request($base,$secondAdminCookie,'dangnhap',['email'=>'admin@local.test','mat_khau'=>$adminPassword]);
     $crossSession = request($base,$secondAdminCookie,'themsanpham',$urlPayload,$adminPath);
-    check('UPLOAD URL: khong dung duoc anh tu phien admin khac', !empty($crossSession['data']['loi']) && $sp->layTheoMa('FLOW-URL-UP')===null && is_file(productStagePath($mainToken)));
+    check('UPLOAD URL: khong dung duoc anh tu phien admin khac', !empty($crossSession['data']['loi']) && $sp->layTheoMa('FLOW-URL-UP')===null && is_file(product_upload::stagePath($mainToken)));
     $forgedToken = request($base,$adminCookie,'themsanpham',array_replace($urlPayload,['_image_uploads'=>json_encode(['main'=>'../../config','gallery'=>[]])]),$adminPath);
     $tooMany = request($base,$adminCookie,'themsanpham',array_replace($urlPayload,['_image_uploads'=>json_encode(['main'=>null,'gallery'=>array_fill(0,7,$mainToken)])]),$adminPath);
-    check('UPLOAD URL: chan token duong dan va album qua 6 anh', !empty($forgedToken['data']['loi']) && !empty($tooMany['data']['loi']) && is_file(productStagePath($mainToken)));
+    check('UPLOAD URL: chan token duong dan va album qua 6 anh', !empty($forgedToken['data']['loi']) && !empty($tooMany['data']['loi']) && is_file(product_upload::stagePath($mainToken)));
     $urlUpload = request($base,$adminCookie,'themsanpham',$urlPayload,'/index.php?khu=admin');
     $urlProduct = $sp->layTheoMa('FLOW-URL-UP');
     if ($urlProduct) $flowImages=array_merge($flowImages,[$urlProduct['hinh']],explode("\n",$urlProduct['anh_phu']));
     $urlDetail = requestHtml($base,$cookie,'/controller/index.php?act=chitiet&id='.(int)($urlProduct['id']??0));
     check('UPLOAD URL: root POST -> anh/detail trong DB -> trang khach', $urlUpload['status']===200 && empty($urlUpload['data']['loi']) && $urlProduct
         && str_contains($urlDetail['body'],'RAM: 8GB') && str_contains($urlDetail['body'],$urlProduct['hinh'])
-        && is_file(BASE_PATH.'/view/image/'.$urlProduct['hinh']) && !is_file(productStagePath($mainToken)));
+        && is_file(BASE_PATH.'/view/image/'.$urlProduct['hinh']) && !is_file(product_upload::stagePath($mainToken)));
     $replayImage = request($base,$adminCookie,'themsanpham',array_replace($urlPayload,['ma_sp'=>'FLOW-URL-REPLAY']),$adminPath);
     check('UPLOAD URL: token anh da luu khong duoc dung lai', !empty($replayImage['data']['loi']) && $sp->layTheoMa('FLOW-URL-REPLAY')===null);
     $stageInvalid = request($base,$adminCookie,'taianhsanpham',['image'=>rtrim(strtr(base64_encode('<?php echo 1;'),'+/','-_'),'=')],$adminPath);
@@ -77,7 +77,7 @@ try {
     $largePng = file_get_contents($flowTmp) . str_repeat("\0",5*1024*1024-filesize($flowTmp));
     $largeStage = request($base,$adminCookie,'taianhsanpham',['image'=>rtrim(strtr(base64_encode($largePng),'+/','-_'),'=')],$adminPath);
     $largeToken = $largeStage['data']['upload_id'] ?? '';
-    check('UPLOAD URL: anh dung 5MB qua duoc POST URL-encoded', !empty($largeStage['data']['ok']) && filesize(productStagePath($largeToken))===5*1024*1024);
+    check('UPLOAD URL: anh dung 5MB qua duoc POST URL-encoded', !empty($largeStage['data']['ok']) && filesize(product_upload::stagePath($largeToken))===5*1024*1024);
     if ($largeToken) {
         request($base,$adminCookie,'themsanpham',array_replace($urlPayload,['_image_uploads'=>json_encode(['main'=>$largeToken,'gallery'=>[]])]),$adminPath);
     }
@@ -219,6 +219,10 @@ try {
     check('FLOW gio cu khong dat duoc san pham ngung ban, don cu van doc duoc',
         !dat($flowKh,$flowSp)['ok'] && $dh->layTrangThai($flowOrder)['chitiet'][0]['ten_sp']==='Flow phone UPDATED');
 } finally {
-    productUploadCleanup($flowImages);
+    foreach ([$stageManager ?? [],$stageEmployee ?? []] as $unusedUpload) {
+        $unusedToken=$unusedUpload['data']['upload_id'] ?? '';
+        if (preg_match('/^[a-f0-9]{32}$/D',$unusedToken)) @unlink(product_upload::stagePath($unusedToken));
+    }
+    product_upload::cleanup($flowImages);
     @unlink($flowTmp); @unlink($badTmp);
 }

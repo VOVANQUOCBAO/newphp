@@ -276,6 +276,8 @@ class thanhtoan_paypal extends xl_database
             $fields['status'] = $status;
             $this->update('thanhtoan_paypal', $fields, 'id_donhang = ?', [$id]);
             $this->commit();
+            require_once __DIR__.'/thongbao_thanhtoan.php';
+            thongbao_thanhtoan::sauThanhToan($id);
             return $this->lay($id);
         } catch (Throwable $e) {
             $this->rollback();

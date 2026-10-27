@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS sanpham (
   bao_hanh VARCHAR(255) NULL,
   anh_phu TEXT NULL,
   ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ngay_nhap DATE NULL,
   han_su_dung DATE NULL,
   CONSTRAINT ck_sp_flow CHECK (gia>=0 AND so_luong_goc>=0 AND so_luong_ton>=0 AND so_luong_ton<=so_luong_goc AND so_luong_loi>=0),
   CONSTRAINT fk_sp_dm FOREIGN KEY (id_danhmuc) REFERENCES danhmuc(id)
@@ -38,6 +39,7 @@ CREATE TABLE IF NOT EXISTS khachhang (
   email VARCHAR(150) NOT NULL UNIQUE,
   google_sub VARCHAR(255) NULL UNIQUE,
   sdt VARCHAR(20) NULL,
+  dia_chi VARCHAR(255) NULL,
   mat_khau VARCHAR(255) NOT NULL,
   ngay_sinh DATE NULL,
   hang ENUM('Silver','Gold','Diamond') NOT NULL DEFAULT 'Silver',
@@ -238,4 +240,39 @@ CREATE TABLE IF NOT EXISTS thanhtoan_qr (
   INDEX ix_qr_pending (status,expires_at),
   CONSTRAINT fk_qr_order FOREIGN KEY (id_donhang) REFERENCES donhang(id),
   CONSTRAINT ck_qr_amount CHECK (amount_vnd>0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS lichsu_nhap (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  id_sanpham INT NOT NULL,
+  so_luong INT NOT NULL,
+  ngay_nhap DATE NOT NULL,
+  nguoi_nhap VARCHAR(150) NOT NULL,
+  ghi_chu VARCHAR(255) NOT NULL DEFAULT '',
+  ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  INDEX ix_nhap_sp (id_sanpham,id),
+  FOREIGN KEY (id_sanpham) REFERENCES sanpham(id),
+  CHECK (so_luong>0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS yeuthich (
+  id_khachhang INT NOT NULL,
+  id_sanpham INT NOT NULL,
+  ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id_khachhang,id_sanpham),
+  FOREIGN KEY (id_khachhang) REFERENCES khachhang(id),
+  FOREIGN KEY (id_sanpham) REFERENCES sanpham(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS email_thanhtoan (
+  id_donhang INT PRIMARY KEY,
+  nguoi_nhan VARCHAR(150) NOT NULL,
+  tieu_de VARCHAR(255) NOT NULL,
+  noi_dung TEXT NOT NULL,
+  trang_thai VARCHAR(20) NOT NULL DEFAULT 'cho_gui',
+  so_lan_thu INT NOT NULL DEFAULT 0,
+  loi VARCHAR(255) NULL,
+  ngay_gui DATETIME NULL,
+  ngay_tao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (id_donhang) REFERENCES donhang(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

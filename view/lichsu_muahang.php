@@ -63,7 +63,7 @@ $orders = is_array($ds_donhang ?? null) ? $ds_donhang : [];
                                 <?php endif; ?>
                             </div>
                         </div>
-                        <?php if (!empty($order['tra_hang'])): ?><div class="alert alert-light mt-3 mb-0">Yêu cầu trả: <?=$e($order['tra_hang']['trang_thai'])?><br><?=$e($order['tra_hang']['phan_hoi'] ?? '')?><?php if (!empty($order['tra_hang']['trang_thai_hoan'])): ?><br><?=$e($order['tra_hang']['trang_thai_hoan'])?> · <?=money($order['tra_hang']['so_tien_hoan'])?> · <?=$e($order['tra_hang']['tham_chieu_hoan'])?><?php endif; ?></div>
+                        <?php if (!empty($order['tra_hang'])): ?><div class="alert alert-light mt-3 mb-0">Yêu cầu trả: <?=$e($order['tra_hang']['trang_thai'])?><br><?=$e($order['tra_hang']['phan_hoi'] ?? '')?><?php if (!empty($order['tra_hang']['trang_thai_hoan'])): ?><br><?=$e($order['tra_hang']['trang_thai_hoan'])?> · <?=view_helper::money($order['tra_hang']['so_tien_hoan'])?> · <?=$e($order['tra_hang']['tham_chieu_hoan'])?><?php endif; ?></div>
                         <?php elseif (in_array($status, [donhang::DA_GIAO,donhang::THANH_CONG], true) && !empty($order['ngay_giao']) && strtotime($order['ngay_giao'] . ' +7 days') >= time()): ?>
                         <details class="mt-3"><summary>Yêu cầu trả toàn bộ đơn hàng</summary><p class="small text-muted mt-2">Gửi trong 7 ngày từ khi giao. Chờ cửa hàng phản hồi trước khi gửi lại hàng; yêu cầu chưa làm thay đổi tồn kho.</p><form action="index.php?act=yeucautra" method="post"><input type="hidden" name="_csrf" value="<?=$e($userCsrf)?>"><input type="hidden" name="id" value="<?=$orderId?>"><textarea class="form-control mb-2" name="ly_do" maxlength="1000" required placeholder="Lý do trả hàng"></textarea><button class="btn btn-sm btn-outline-warning">Gửi yêu cầu trả</button></form></details>
                         <?php endif; ?>
@@ -77,7 +77,7 @@ $orders = is_array($ds_donhang ?? null) ? $ds_donhang : [];
 <div class="modal fade" id="modalHuyDon" tabindex="-1" aria-labelledby="modalHuyDonLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered"><div class="modal-content">
         <form action="index.php?act=huydonhang" method="post"><input type="hidden" name="_csrf" value="<?=$e($userCsrf)?>">
-            <input type="hidden" name="_checkout_csrf" value="<?=$e(paypalCheckoutToken())?>">
+            <input type="hidden" name="_checkout_csrf" value="<?=$e(paypal_controller::checkoutToken())?>">
             <div class="modal-header"><h2 class="modal-title fs-5" id="modalHuyDonLabel">Hủy đơn hàng</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button></div>
             <div class="modal-body">
                 <p>Bạn xác nhận hủy đơn <strong id="cancelOrderIdText"></strong>?</p>

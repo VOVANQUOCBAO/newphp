@@ -5,7 +5,7 @@
                 <div class="card-header bg-primary text-white text-center py-4">
                     <div class="display-6 mb-1"><i class="fas fa-sign-in-alt"></i></div>
                     <h4 class="fw-bold mb-0 text-uppercase">Đăng nhập</h4>
-                    <p class="small opacity-75 mb-0">Chào mừng bạn quay lại với ĐiệnThoạiZ</p>
+                    <p class="small opacity-75 mb-0">Đăng nhập BP Store</p>
                 </div>
 
                 <div class="card-body p-4 p-md-5">

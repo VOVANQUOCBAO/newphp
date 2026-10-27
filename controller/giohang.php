@@ -121,26 +121,3 @@ class giohang
         return ['items' => $rows, 'tong' => $tong];
     }
 }
-
-// Hàm kiểm tra hỗ trợ bài mẫu Lab 3.1 của thầy
-if (!function_exists('kiemtra')) {
-    function kiemtra($id): int {
-        if (!isset($_SESSION['giohang']) || !is_array($_SESSION['giohang'])) {
-            return -1;
-        }
-        $targetId = is_array($id) ? ($id[0] ?? null) : $id;
-        if ($targetId === null) {
-            return -1;
-        }
-        for ($i = 0; $i < count($_SESSION['giohang']); $i++) {
-            if (isset($_SESSION['giohang'][$i][0]) && $_SESSION['giohang'][$i][0] == $targetId) {
-                return $i;
-            }
-        }
-        if (array_key_exists($targetId, $_SESSION['giohang'])) {
-            return (int)$targetId;
-        }
-        return -1;
-    }
-}
-

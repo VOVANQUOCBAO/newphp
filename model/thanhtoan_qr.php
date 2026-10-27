@@ -77,7 +77,7 @@ class thanhtoan_qr extends xl_database
     private function admin(int $actor): void
     {
         $user = $this->selectOne('SELECT vai_tro,trang_thai FROM nhanvien WHERE id=?',[$actor]);
-        if (!$user || (int)$user['trang_thai'] !== 1 || !in_array($user['vai_tro'],['Admin','SuperAdmin'],true)) throw new DomainException('Chỉ quản trị viên được xác nhận tiền.');
+        if (!$user || (int)$user['trang_thai'] !== 1 || !in_array($user['vai_tro'],['Admin','SuperAdmin','QuanLy','NhanVien'],true)) throw new DomainException('Tài khoản không có quyền đối soát tiền.');
     }
 
     public function khongNhanTien(int $id, int $actor): array
@@ -139,6 +139,8 @@ class thanhtoan_qr extends xl_database
             if (!$q) throw new DomainException('Không tìm thấy đơn chuyển khoản.');
             $apply($order,$q);
             $this->commit();
+            require_once __DIR__.'/thongbao_thanhtoan.php';
+            thongbao_thanhtoan::sauThanhToan($id);
             return ['ok'=>true];
         } catch (Throwable $e) {
             $this->rollback();

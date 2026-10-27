@@ -11,19 +11,27 @@ require_once dirname(__DIR__, 2) . '/model/donhang.php';
 require_once dirname(__DIR__, 2) . '/model/chitietdonhang.php';
 require_once dirname(__DIR__, 2) . '/controller/xuly_email.php';
 
+require_once dirname(__DIR__, 2) . '/model/giaodien.php';
+
 class admin_controller
 {
+    public function chiTietSanPham(int $id): ?array
+    {
+        return (new sanpham())->chiTietAdmin($id);
+    }
+
     public function dangNhap(string $email, string $matKhau): array
     {
         return (new nhanvien())->kiemTraDangNhap($email, $matKhau);
     }
 
-    public function trangSanPham(): array
+    public function trangSanPham(bool $ngungBan = false): array
     {
         (new donhang())->donPayPalHetHan();
         $sp = new sanpham();
         return [
-            'ds_sanpham' => $sp->layDSAdmin(),
+            'ds_sanpham' => $sp->layDSAdmin($ngungBan),
+            'xem_ngung_ban' => $ngungBan,
             'ds_danhmuc' => (new danhmuc())->layDS(),
             'sap_het' => $sp->canhBaoSapHet(5),
             'hang_e' => $sp->hangE(),
@@ -34,10 +42,10 @@ class admin_controller
     public function luuSanPham(array $data, int $id = 0): array
     {
         require_once __DIR__ . '/../product_upload.php';
-        $upload = productUpload($data);
+        $upload = product_upload::upload($data);
         if (!$upload['ok']) return $upload;
         $result = $id > 0 ? $this->suaSanPham($id, $upload['data']) : $this->themSanPham($upload['data']);
-        if (!$result['ok']) productUploadCleanup($upload['created']);
+        if (!$result['ok']) product_upload::cleanup($upload['created']);
         return $result;
     }
 
@@ -200,6 +208,9 @@ class admin_controller
         if ($dh === null) {
             return ['ok' => false, 'loi' => 'Khong tim thay don hang'];
         }
+        $khach = (new khachhang())->layTheoId((int)$dh['id_khachhang']);
+        $dh['ho_ten'] = $khach['ho_ten'] ?? 'Khách hàng #'.$dh['id_khachhang'];
+        $dh['email'] = $khach['email'] ?? '';
         return ['ok' => true, 'donhang' => $dh];
     }
 
@@ -215,39 +226,11 @@ class admin_controller
 
     public function trangGiaoDien(): array
     {
-        $file = dirname(__DIR__, 2) . '/support/config/theme.json';
-        $cfg = ['season' => 'default', 'font' => 'font-segoe', 'bg' => 'bg-light-gray'];
-        if (is_file($file)) {
-            $saved = json_decode((string)file_get_contents($file), true);
-            if (is_array($saved)) {
-                $cfg = array_merge($cfg, $saved);
-            }
-        }
-        return ['theme' => $cfg];
+        return ['theme' => (new giaodien())->doc()];
     }
 
     public function luuGiaoDien(array $data): array
     {
-        $validSeasons = ['default', 'theme-spring', 'theme-summer', 'theme-autumn', 'theme-winter'];
-        $validFonts = ['font-segoe', 'font-bevietnam', 'font-roboto', 'font-montserrat'];
-        $validBgs = ['bg-light-gray', 'bg-white-pure', 'bg-soft-blue'];
-
-        $season = in_array($data['season'] ?? '', $validSeasons, true) ? $data['season'] : 'default';
-        $font = in_array($data['font'] ?? '', $validFonts, true) ? $data['font'] : 'font-segoe';
-        $bg = in_array($data['bg'] ?? '', $validBgs, true) ? $data['bg'] : 'bg-light-gray';
-
-        $cfg = [
-            'season' => $season,
-            'font' => $font,
-            'bg' => $bg,
-            'updated_at' => date('Y-m-d H:i:s'),
-        ];
-
-        $dir = dirname(__DIR__, 2) . '/support/config';
-        if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
-        }
-        if (file_put_contents($dir . '/theme.json', json_encode($cfg, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE), LOCK_EX) === false) return ['ok'=>false,'loi'=>'Không thể lưu giao diện.'];
-        return ['ok' => true, 'theme' => $cfg];
+        return (new giaodien())->luu($data);
     }
 }

@@ -43,7 +43,7 @@ $currentIndex = array_search($order['trang_thai'] ?? '', $timeline, true);
                 <p><strong>Địa chỉ giao hàng:</strong> <?=$e($order['dia_chi'])?> · <strong>Điện thoại:</strong> <?=$e($order['sdt'])?></p>
                 <?php if (!empty($order['lichsu'])): ?><details class="mb-3"><summary>Lịch sử xử lý</summary><ul class="mt-2"><?php foreach ($order['lichsu'] as $event): ?><li><?=$e($event['ngay_tao'])?> · <?=$e($event['trang_thai_moi'])?> · <?=$e($event['ghi_chu'])?></li><?php endforeach; ?></ul></details><?php endif; ?>
                 <h2 class="h5 mt-4">Sản phẩm</h2>
-                <?php if (!empty($order['voucher_pham_vi'])): ?><p class="small">Voucher <?=$e($order['ma_voucher'])?> · <?=$e($order['voucher_doi_tuong'])?><br>Tiền hàng được áp dụng: <?=money($order['voucher_tien_ap_dung'])?> · Giảm <?=money($order['tien_giam'])?></p><?php endif; ?>
+                <?php if (!empty($order['voucher_pham_vi'])): ?><p class="small">Voucher <?=$e($order['ma_voucher'])?> · <?=$e($order['voucher_doi_tuong'])?><br>Tiền hàng được áp dụng: <?=view_helper::money($order['voucher_tien_ap_dung'])?> · Giảm <?=view_helper::money($order['tien_giam'])?></p><?php endif; ?>
                 <ul class="list-group mb-3">
                     <?php foreach ($order['chitiet'] as $item): ?>
                         <li class="list-group-item d-flex justify-content-between gap-3">
@@ -52,7 +52,7 @@ $currentIndex = array_search($order['trang_thai'] ?? '', $timeline, true);
                         </li>
                     <?php endforeach; ?>
                 </ul>
-                <div class="text-end"><?php if ($order['tien_giam'] !== null): ?><div>Tạm tính: <?=money($order['tam_tinh'])?> · Giảm voucher: <?=money($order['tien_giam'])?></div><?php endif; ?><div>Phí giao hàng: <?=number_format((float) $order['phi_ship'], 0, ',', '.')?>đ</div><strong class="text-danger fs-5">Tổng: <?=number_format((float) $order['tong_tien'], 0, ',', '.')?>đ</strong></div>
+                <div class="text-end"><?php if ($order['tien_giam'] !== null): ?><div>Tạm tính: <?=view_helper::money($order['tam_tinh'])?> · Giảm voucher: <?=view_helper::money($order['tien_giam'])?></div><?php endif; ?><div>Phí giao hàng: <?=number_format((float) $order['phi_ship'], 0, ',', '.')?>đ</div><strong class="text-danger fs-5">Tổng: <?=number_format((float) $order['tong_tien'], 0, ',', '.')?>đ</strong></div>
             </div>
         </article>
     <?php endif; ?>

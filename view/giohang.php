@@ -73,7 +73,7 @@ $tong_tien = 0;
 
                             <!-- 2. Hình ảnh -->
                             <td>
-                                <img src="<?=$e(productImage($hinh))?>" alt="<?=htmlspecialchars($ten)?>" style="height: 55px; width: 65px; object-fit: contain;" class="rounded border p-1 bg-white">
+                                <img src="<?=$e(view_helper::productImage($hinh))?>" alt="<?=htmlspecialchars($ten)?>" style="height: 55px; width: 65px; object-fit: contain;" class="rounded border p-1 bg-white">
                             </td>
 
                             <!-- 3. Tên sản phẩm -->

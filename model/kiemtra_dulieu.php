@@ -57,7 +57,8 @@ class kiemtra_dulieu extends xl_database
         $page = max(1, min($page, $totalPages));
         $offset = ($page-1)*$pageSize;
         $fields = implode(',', array_map(static fn($c) => "`$c`", $visibleColumns));
-        $rows = $this->select("SELECT $fields FROM `$table` ORDER BY 1 DESC LIMIT $pageSize OFFSET $offset");
+        $direction=$table==='sanpham'?'ASC':'DESC';
+        $rows = $this->select("SELECT $fields FROM `$table` ORDER BY 1 $direction LIMIT $pageSize OFFSET $offset");
         return compact('tableCounts','columns','visibleColumns','pageSize','totalRows','totalPages','page','rows');
     }
 }

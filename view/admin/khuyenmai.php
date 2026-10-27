@@ -45,4 +45,4 @@ $activeCategoryIds=array_map('intval',array_column($ds_danhmuc,'id'));
     </div><a href="<?=$admin_url?>&amp;act=doanhthu" class="d-inline-block mt-2">Xem báo cáo bán hàng</a></div></details>
 </div>
 <script type="application/json" id="promotion-posted"><?=json_encode($posted,JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT)?></script>
-<script src="<?=$e(shopBase())?>/view/js/admin-promotions.js?v=20261022-clean" defer></script>
+<script src="<?=$e(view_helper::shopBase())?>/view/js/admin-promotions.js?v=20261022-clean" defer></script>

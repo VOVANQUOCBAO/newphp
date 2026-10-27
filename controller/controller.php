@@ -1,26 +1,11 @@
 <?php
 
+require_once dirname(__DIR__) . '/model/giaodien.php';
+
 class controller
 {
     public function render(string $view, array $data = []): void
     {
-        if ($view === 'thanhtoan.php' && !empty($data['user']) && empty($data['ok'])) {
-            $data['bankAvailable'] = thanhtoan_qr::ready() && thanhtoan_qr::schemaReady();
-            $data['codCheckoutKey'] = $_SESSION['cod_checkout_key'] ?? '';
-            $code = trim((string)($_POST['ma_voucher'] ?? ''));
-            $cart = $data['giohang'];
-            $shipping = in_array($data['user']['hang'], ['Gold','Diamond'], true) ? 0.0 : donhang::PHI_SHIP_MAC_DINH;
-            $data['voucherQuote'] = $code === '' ? ['ok' => true, 'giam' => 0, 'phi_ship' => $shipping, 'tong' => $cart['tong'] + $shipping]
-                : (new voucher())->kiemTra($code, $data['user']['hang'], (float)$cart['tong'], $shipping, false, $cart['items']);
-            $data['availableVouchers'] = array_values(array_filter((new voucher())->layDS(),static fn($v)=>(int)$v['so_luong']>0 && date('Y-m-d')>=$v['ngay_bd'] && date('Y-m-d')<=$v['ngay_kt']));
-            usort($data['availableVouchers'],static fn($a,$b)=>[$a['ngay_kt'],$a['id']]<=>[$b['ngay_kt'],$b['id']]);
-            foreach ($data['availableVouchers'] as &$vc) {
-                $quote=(new voucher())->kiemTra($vc['ma_code'],$data['user']['hang'],(float)$cart['tong'],$shipping,false,$cart['items']);
-                $vc['pham_vi_label']=voucher::scopeLabel($vc);
-                $vc['du_dieu_kien']=$quote['ok']; $vc['ly_do']=$quote['loi'] ?? null;
-            }
-            unset($vc);
-        }
         if (!headers_sent()) header('Cache-Control: no-store, private');
         $data['userCsrf'] = $this->userCsrf();
         if (str_starts_with(ltrim($view, '/'), 'admin/')) {
@@ -28,8 +13,18 @@ class controller
             $role = (string) ($_SESSION['admin']['vai_tro'] ?? '');
             $data['adminRole'] = $role;
             $data['isSuperAdmin'] = in_array($role, ['Admin', 'SuperAdmin'], true);
+            $data['canManageStore'] = in_array($role,['Admin','SuperAdmin','QuanLy','NhanVien'],true);
             $data['isManager'] = $role === 'QuanLy';
             $data['isEmployee'] = $role === 'NhanVien';
+            require_once BASE_PATH . '/support/scripts/migrate_store_tools.php';
+            $data['storeToolsReady'] = migration_store_tools::ready(csdl::shared());
+            $data['bankSchemaReady'] = thanhtoan_qr::schemaReady();
+        } else {
+            $themeModel = new giaodien();
+            $data['theme_cfg'] = $themeModel->doc();
+            if (isset($_SESSION['admin']) && is_string($_GET['season'] ?? null)) {
+                $data['theme_cfg'] = $themeModel->xemTruoc($data['theme_cfg'], $_GET['season']);
+            }
         }
 
         // 1. Kiểm tra nếu là request kiểm thử / API JSON
@@ -75,7 +70,9 @@ class controller
             if (is_file($menu)) {
                 require $menu;
             }
+            echo '<div id="store-content" class="bpstore-content" tabindex="-1">';
             require $path;
+            echo '</div>';
             if (is_file($footer)) {
                 require $footer;
             }
@@ -127,6 +124,23 @@ class controller
         return is_string($act) && $act !== '' ? $act : 'trangchu';
     }
 
+    protected function validateInputs(bool $checkNumbers = false): void
+    {
+        foreach ([$_GET, $_POST] as $inputs) {
+            foreach ($inputs as $key => $value) {
+                if (!is_scalar($value) && $value !== null) {
+                    throw new InvalidArgumentException('Tham số phải là giá trị đơn.');
+                }
+                $numberFields = ['id', 'id_sanpham', 'id_danhmuc', 'sl', 'so_sao', 'trang', 'moi_trang'];
+                if ($checkNumbers && in_array($key, $numberFields, true)
+                    && !($key === 'id_danhmuc' && $value === '')
+                    && filter_var($value, FILTER_VALIDATE_INT) === false) {
+                    throw new InvalidArgumentException('Tham số số nguyên không hợp lệ.');
+                }
+            }
+        }
+    }
+
     public function requireUser(): ?array
     {
         if (empty($_SESSION['user']['id'])) {
@@ -174,13 +188,12 @@ class controller
             return true;
         }
 
-        $allowedActions = match ($role) {
-            'QuanLy' => ['sanpham', 'donhang', 'chitietdonhang', 'khachhang', 'giaodien', 'doimatkhau'],
-            'NhanVien' => ['sanpham', 'doimatkhau'],
-            default => [],
-        };
-
-        return in_array($action, $allowedActions, true);
+        $business=['sanpham','chitietsanpham','diemthanhvien','nhapkho','taianhsanpham','themsanpham','suasanpham','xoasanpham','mobanlaisanpham','danhmuc','themdanhmuc',
+            'donhang','chitietdonhang','capnhattrangthai','kiemtrapaypal','tuchoitra','hoancod','xacnhanqr','hoanqr','kiemtraqr',
+            'voucher','themvoucher','suaphamvivoucher','xoavoucher','khuyenmai','themkhuyenmai','suakhuyenmai',
+            'khachhang','khoakhachhang','guiquatang','phanhoikhieunai','danhgia','khoadanhgia','doanhthu','nhanvien','themnhanvien','khoanhanvien','doivaitronhanvien',
+            'giaodien','doimatkhau','kiemtra','csdl','thongbao','guilaithanhtoan','luucauhinhmail','guithunghiemmail'];
+        return in_array($role,['QuanLy','NhanVien'],true) && in_array($action,$business,true);
     }
 
     public function userCsrf(): string

@@ -81,7 +81,7 @@ check('SCOPE admin form -> model -> DB luu san pham dung',$httpCreate['status']=
 $adminHtml=requestHtml($base,$adminCookie,'/index.php?khu=admin&act=voucher');
 check('SCOPE admin hien lua chon tao/sua va doi tuong da luu',str_contains($adminHtml['body'],'Theo danh mục') && str_contains($adminHtml['body'],'Theo sản phẩm') && str_contains($adminHtml['body'],'voucher-scope.js') && str_contains($adminHtml['body'],'Sản phẩm: San pham SCOPE-CABLE'));
 $scopeUpdate=['id'=>$httpVc['id'],'pham_vi'=>'danhmuc','id_danhmuc'=>$scopeDm];
-$managerEdit=request($base,$managerCookie,'suaphamvivoucher',$scopeUpdate,$adminPath);$badCsrf=request($base,$adminCookie,'suaphamvivoucher',$scopeUpdate+['_csrf'=>''],$adminPath);
+$managerEdit=request($base,$managerCookie,'suaphamvivoucher',$scopeUpdate+['_csrf'=>''],$adminPath);$badCsrf=request($base,$adminCookie,'suaphamvivoucher',$scopeUpdate+['_csrf'=>''],$adminPath);
 check('SCOPE sua pham vi bat buoc quyen admin va CSRF',$managerEdit['status']===403 && $badCsrf['status']===403 && $scopeModel->layTheoCode('SCOPE-HTTP')['pham_vi']==='sanpham');
 $updated=request($base,$adminCookie,'suaphamvivoucher',$scopeUpdate,$adminPath);
 check('SCOPE admin sua pham vi ma cu khong can xoa ma',$updated['status']===200 && $scopeModel->layTheoCode('SCOPE-HTTP')['pham_vi']==='danhmuc' && (int)$scopeModel->layTheoCode('SCOPE-HTTP')['so_luong']===3);
@@ -97,7 +97,7 @@ try {
     $adminPdo->exec("CREATE DATABASE `$legacyScopeDb` CHARACTER SET utf8mb4");
     $legacyPdo=new PDO("mysql:host={$cfg['host']};port={$cfg['port']};dbname=$legacyScopeDb;charset=utf8mb4",$cfg['user'],$cfg['pass'],[PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION]);
     $legacyPdo->exec("CREATE TABLE voucher(id INT PRIMARY KEY,ma_code VARCHAR(50),so_luong INT); CREATE TABLE donhang(id INT PRIMARY KEY,tong_tien DECIMAL(12,2)); INSERT INTO voucher VALUES(1,'IPHONE18',3); INSERT INTO donhang VALUES(1,123000)");
-    migrateVoucherScope($legacyPdo);migrateVoucherScope($legacyPdo);
+    migration_voucher_scope::run($legacyPdo);migration_voucher_scope::run($legacyPdo);
     $legacyVoucher=$legacyPdo->query('SELECT * FROM voucher')->fetch(PDO::FETCH_ASSOC);$legacyOrder=$legacyPdo->query('SELECT * FROM donhang')->fetch(PDO::FETCH_ASSOC);
     check('SCOPE migration lap lai giu voucher cu toan cua hang va tong don',$legacyVoucher['pham_vi']==='tatca' && $legacyVoucher['so_luong']==3 && $legacyVoucher['id_danhmuc']===null && $legacyVoucher['id_sanpham']===null && $legacyOrder['tong_tien']==='123000.00' && $legacyOrder['voucher_pham_vi']===null);
 } finally { $legacyPdo=null; if (preg_match('/^webbanhang_mvc_test_[a-f0-9]{12}_scope$/',$legacyScopeDb)) $adminPdo->exec("DROP DATABASE IF EXISTS `$legacyScopeDb`"); }

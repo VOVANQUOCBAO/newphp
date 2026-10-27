@@ -22,7 +22,7 @@ $usPrice=$km->giaSauKM($sp->layChiTiet($usId));
 check('ADMIN nhieu khuyen mai lay muc cao nhat, khong cong don',$usCategory['ok'] && $usPrice['gia_km']===400000.0);
 $usOrder=dat($usKh,$usId);
 $usChange=$usPromo+['id'=>$usPromotion['id']];$usChange['phan_tram']=30;
-$usManager=request($base,$managerCookie,'suakhuyenmai',$usChange,$adminPath);
+$usManager=request($base,$managerCookie,'suakhuyenmai',$usChange+['_csrf'=>''],$adminPath);
 $usCsrf=request($base,$adminCookie,'suakhuyenmai',$usChange+['_csrf'=>''],$adminPath);
 $usGet=request($base,$adminCookie,'suakhuyenmai',null,$adminPath);
 check('ADMIN sua khuyen mai bat buoc quyen POST va CSRF',$usManager['status']===403 && $usCsrf['status']===403 && $usGet['status']===405 && $km->giaSauKM($sp->layChiTiet($usId))['gia_km']===400000.0);
@@ -40,7 +40,43 @@ $usRestore=request($base,$adminCookie,'khoadanhgia',['id'=>$usReview['id'],'tran
 $usInvalid=request($base,$adminCookie,'khoadanhgia',['id'=>$usReview['id'],'trang_thai'=>2],$adminPath);
 check('ADMIN hien thi lai danh gia, tu choi trang thai la',empty($usRestore['data']['loi']) && !empty($usInvalid['data']['loi']) && count($dg->layDSTheoSP($usId))===1);
 $usReviewForbidden=request($base,$managerCookie,'khoadanhgia',['id'=>$usReview['id'],'trang_thai'=>0],$adminPath);
-check('ADMIN quyen QuanLy khong duoc an/hien thi danh gia',$usReviewForbidden['status']===403 && count($dg->layDSTheoSP($usId))===1);
+check('ADMIN quyen QuanLy duoc kiem duyet danh gia',$usReviewForbidden['status']===200 && empty($usReviewForbidden['data']['loi']) && count($dg->layDSTheoSP($usId))===0);
+$usComplaintId=(new email())->luuThu($usKh,'Khiếu nại kiểm thử','Khách cần hỗ trợ đơn hàng.','khieunai');
+$usReplyModelEmpty=(new email())->luuPhanHoiKhieuNai($usComplaintId,'   ');
+$usReplyModelUnknown=(new email())->luuPhanHoiKhieuNai(999999999,'Không được lưu');
+$usReplyCountBefore=(int)$pdo->query("SELECT COUNT(*) FROM email WHERE id_khachhang=".(int)$usKh." AND loai='phanhoi_khieunai'")->fetchColumn();
+$usEmptyReply=request($base,$adminCookie,'phanhoikhieunai',['id_khieunai'=>$usComplaintId,'noi_dung'=>'   '],$adminPath);
+$usUnknownComplaint=request($base,$adminCookie,'phanhoikhieunai',['id_khieunai'=>999999999,'noi_dung'=>'Không được lưu'], $adminPath);
+$usNoCsrfReply=request($base,$adminCookie,'phanhoikhieunai',['_csrf'=>'','id_khieunai'=>$usComplaintId,'noi_dung'=>'Không được lưu'], $adminPath);
+$usGetReply=request($base,$adminCookie,'phanhoikhieunai',null,$adminPath);
+$usStaffReply=request($base,$managerCookie,'phanhoikhieunai',['id_khieunai'=>$usComplaintId,'noi_dung'=>'BP Store đã kiểm tra và sẽ liên hệ bạn trong hôm nay.'], $adminPath);
+$usComplaintRow=array_values(array_filter((new email())->khieuNaiAdmin(),static fn($row)=>(int)$row['id']===$usComplaintId))[0] ?? null;
+$usStoredReplies=array_values(array_filter((new email())->layThuCuaKhach($usKh),static fn($row)=>($row['loai'] ?? '')==='phanhoi_khieunai'));
+check('ADMIN va QuanLy phan hoi khieu nai: CSRF, validate va luu vao hop thu khach',
+    !empty($usReplyModelEmpty['loi']) && !empty($usReplyModelUnknown['loi'])
+    && $usEmptyReply['status']===200 && $usUnknownComplaint['status']===200
+    && $usNoCsrfReply['status']===403 && $usGetReply['status']===405
+    && $usStaffReply['status']===200 && empty($usStaffReply['data']['loi'])
+    && (int)$pdo->query("SELECT COUNT(*) FROM email WHERE id_khachhang=".(int)$usKh." AND loai='phanhoi_khieunai'")->fetchColumn()===$usReplyCountBefore+1
+    && count($usStoredReplies)===1 && str_contains($usStoredReplies[0]['noi_dung'],'liên hệ bạn')
+    && count($usComplaintRow['phan_hoi'] ?? [])===1,
+    ['empty_status'=>$usEmptyReply['status'],'empty_error'=>$usEmptyReply['data']['loi'] ?? null,
+        'unknown_status'=>$usUnknownComplaint['status'],'unknown_error'=>$usUnknownComplaint['data']['loi'] ?? null,
+        'reply_status'=>$usStaffReply['status'],'reply_error'=>$usStaffReply['data']['loi'] ?? null,
+        'stored'=>count($usStoredReplies),'reply_text'=>str_contains($usStoredReplies[0]['noi_dung'] ?? '', 'liên hệ bạn'),
+        'thread'=>count($usComplaintRow['phan_hoi'] ?? [])]);
+$usCustomerCookie='';
+request($base,$usCustomerCookie,'dangnhap',['email'=>'admin-workflow@test.local','mat_khau'=>'123456']);
+$usCustomerInbox=requestHtml($base,$usCustomerCookie,'/controller/index.php?act=hopthu&id='.(int)($usStoredReplies[0]['id'] ?? 0));
+check('Khach xem duoc noi dung phan hoi va nhan dien loai thu',
+    $usCustomerInbox['status']===200 && str_contains($usCustomerInbox['body'],'Phản hồi khiếu nại')
+    && str_contains($usCustomerInbox['body'],'liên hệ bạn'),
+    ['status'=>$usCustomerInbox['status'],'has_type'=>str_contains($usCustomerInbox['body'],'Phản hồi khiếu nại'),
+        'has_reply'=>str_contains($usCustomerInbox['body'],'liên hệ bạn'),'excerpt'=>substr($usCustomerInbox['body'],0,400)]);
+$usComplaintAdminHtml=requestHtml($base,$adminCookie,'/index.php?khu=admin&act=donhang');
+check('ADMIN hien thi form phan hoi khi khieu nai',
+    $usComplaintAdminHtml['status']===200 && str_contains($usComplaintAdminHtml['body'],'act=phanhoikhieunai')
+    && str_contains($usComplaintAdminHtml['body'],'name="noi_dung"') && str_contains($usComplaintAdminHtml['body'],'Khách cần hỗ trợ đơn hàng.'));
 $usMailBefore=(int)$pdo->query('SELECT COUNT(*) FROM email')->fetchColumn();
 $usPasswordBefore=$nv->selectOne('SELECT SHA2(mat_khau,256) AS digest FROM nhanvien WHERE id=?',[$adminId])['digest'];
 $usPasswordCsrf=request($base,$adminCookie,'doimatkhau',['_csrf'=>''], $adminPath);
